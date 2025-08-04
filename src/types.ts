@@ -5,6 +5,7 @@ export interface CourseItemRaw {
   semester: string;
   prereq: string;
   units: string;
+  level: string;
 }
 
 export interface Query {
@@ -13,4 +14,5 @@ export interface Query {
   semester?: string;
   prereq?: string;
   units?: string;
+  level?: string;
 }
