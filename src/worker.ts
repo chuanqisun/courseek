@@ -257,7 +257,7 @@ self.addEventListener("message", (event) => {
         const titleScore = getMatchScore(normalizedKeywords, course.title);
         const descriptionScore = getMatchScore(normalizedKeywords, course.description);
         const instructorScore = getMatchScore(normalizedKeywords, course.instructor);
-        const totalScore = Math.max(titleScore, descriptionScore * 0.8, instructorScore * 0.9); // Weight: title > instructor > description
+        const totalScore = Math.max(titleScore, descriptionScore * 0.75, instructorScore * 0.9); // Weight: title > instructor > description
 
         return { ...course, score: totalScore };
       })

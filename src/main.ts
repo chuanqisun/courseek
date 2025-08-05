@@ -457,7 +457,13 @@ const Main = createComponent(() => {
               <div class="form-section">
                 <label class="block-field">
                   <b>Keywords</b>
-                  <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
+                  <input
+                    type="search"
+                    name="title"
+                    @input=${handleTitleChange}
+                    .value=${observe(title.value$)}
+                    placeholder="Course, instructor"
+                  />
                 </label>
 
                 <label class="block-field">
