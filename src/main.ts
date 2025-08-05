@@ -1,6 +1,7 @@
 import "@lit-labs/virtualizer";
 import type { RenderItemFunction } from "@lit-labs/virtualizer/virtualize.js";
 import { html, render } from "lit-html";
+import { unsafeHTML } from "lit-html/directives/unsafe-html.js";
 import { BehaviorSubject, combineLatest, ignoreElements, map, merge, mergeWith, switchMap, tap } from "rxjs";
 import "./main.css";
 import { createComponent } from "./sdk/create-component";
@@ -8,6 +9,13 @@ import { observe } from "./sdk/observe-directive";
 import { type CourseItem, type Query } from "./types";
 import { useSearchParam } from "./url/url";
 import Worker from "./worker?worker";
+
+// Extended interface for search results with highlighted HTML
+interface SearchableCourse extends CourseItem {
+  score?: number;
+  titleHTML?: string;
+  descriptionHTML?: string;
+}
 
 const worker = new Worker();
 
@@ -110,7 +118,7 @@ const Main = createComponent(() => {
       },
     },
   });
-  const activeItems$ = new BehaviorSubject<CourseItem[]>([]);
+  const activeItems$ = new BehaviorSubject<SearchableCourse[]>([]);
 
   const handleTitleChange = (event: Event) => {
     title.replace((event.target as HTMLInputElement).value.trim());
@@ -296,11 +304,11 @@ const Main = createComponent(() => {
         const ports = new MessageChannel();
         worker.postMessage(fullQuery, [ports.port2]);
 
-        return new Promise<CourseItem[]>((resolve) => {
+        return new Promise<SearchableCourse[]>((resolve) => {
           ports.port1.onmessage = (event) => {
             const { results } = event.data;
-            activeItems$.next(results as CourseItem[]);
-            resolve(results as CourseItem[]);
+            activeItems$.next(results as SearchableCourse[]);
+            resolve(results as SearchableCourse[]);
           };
         });
       },
@@ -333,7 +341,7 @@ const Main = createComponent(() => {
         currentNoPrereq,
         currentNoFinal,
       ]) => {
-        const renderItem: RenderItemFunction<CourseItem> = (item) =>
+        const renderItem: RenderItemFunction<SearchableCourse> = (item) =>
           html`<div class="course-card">
             <div class="course-title">
               <strong>
@@ -341,7 +349,7 @@ const Main = createComponent(() => {
                   href="https://student.mit.edu/catalog/search.cgi?search=${item.id}"
                   target="_blank"
                   class="course-eval-link"
-                  >${item.id} ${item.title}</a
+                  >${item.id} ${item.titleHTML ? unsafeHTML(item.titleHTML) : item.title}</a
                 >
               </strong>
               <div class="course-meta-primary">
@@ -393,10 +401,13 @@ const Main = createComponent(() => {
               </div>
             </div>
 
-            <div class="course-description">${item.description}</div>
+            <div class="course-description">
+              ${item.descriptionHTML ? unsafeHTML(item.descriptionHTML) : item.description}
+            </div>
 
             <div class="course-meta-secondary">
               ${item.instructor ? html`${item.instructor} · ` : ""}Prereq: ${item.prereq}
+              ${item.half ? html` · Half term` : ""} ${!item.final ? html` · No final` : ""}
             </div>
           </div>` as any;
 

@@ -10,6 +10,8 @@ export interface CourseItem {
   hours: number;
   rating: number;
   size: number;
+  half: boolean;
+  final: boolean;
 }
 
 export interface Query {
