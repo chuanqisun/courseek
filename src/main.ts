@@ -2,17 +2,31 @@ import "@lit-labs/virtualizer";
 import type { RenderItemFunction } from "@lit-labs/virtualizer/virtualize.js";
 import { html, render } from "lit-html";
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js";
-import { BehaviorSubject, combineLatest, ignoreElements, map, merge, mergeWith, switchMap, tap } from "rxjs";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  ignoreElements,
+  map,
+  merge,
+  mergeWith,
+  Subject,
+  switchMap,
+  tap,
+} from "rxjs";
 import "./main.css";
 import { createComponent } from "./sdk/create-component";
 import { observe } from "./sdk/observe-directive";
-import { type Query, type SearchableCourse, type UnitsFilter } from "./types";
+import { type Query, type SearchableCourse, type UnitsFilter, type WorkerResponseData } from "./types";
 import { useSearchParam } from "./url/url";
 import Worker from "./worker?worker";
 
 const worker = new Worker();
 
 const Main = createComponent(() => {
+  const lastUpdated$ = new Subject<string>();
+  const lastUpdatedDisplay$ = lastUpdated$.pipe(distinctUntilChanged());
+
   const title = useSearchParam<string>({ name: "title", initialValue: "" });
   const numbers = useSearchParam<string>({ name: "numbers", initialValue: "" });
   const selectedTerms = useSearchParam<("FA" | "JA" | "SP" | "SU")[]>({
@@ -328,8 +342,9 @@ const Main = createComponent(() => {
 
         return new Promise<SearchableCourse[]>((resolve) => {
           ports.port1.onmessage = (event) => {
-            const { results } = event.data;
+            const { results, lastUpdated } = event.data as WorkerResponseData;
             activeItems$.next(results as SearchableCourse[]);
+            lastUpdated$.next(lastUpdated);
             resolve(results as SearchableCourse[]);
           };
         });
@@ -772,7 +787,13 @@ const Main = createComponent(() => {
                   </label>
                 </div>
               </fieldset>
-              <a class="support-link" href="https://github.com/chuanqisun/courseek">File a bug</a>
+              <fieldset>
+                <legend>Meta</legend>
+                <a class="support-link" href="https://github.com/chuanqisun/courseek/actions/"
+                  >${observe(lastUpdatedDisplay$)}</a
+                >
+                <a class="support-link" href="https://github.com/chuanqisun/courseek">File a bug</a>
+              </fieldset>
             </div>
 
             <div class="results-panel">

@@ -1,3 +1,8 @@
+export interface WorkerResponseData {
+  results: SearchableCourse[];
+  lastUpdated: string;
+}
+
 export interface CourseItem {
   id: string;
   title: string;

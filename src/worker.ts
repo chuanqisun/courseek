@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import data from "./data/latest.json";
-import type { CourseItem, HydrantRaw, Query, SearchableCourse } from "./types";
+import type { CourseItem, HydrantRaw, Query, SearchableCourse, WorkerResponseData } from "./types";
 
 declare var self: DedicatedWorkerGlobalScope;
 
@@ -104,7 +104,7 @@ self.addEventListener("message", (event) => {
 
   const query = event.data as Query;
 
-  let results: CourseItem[] | SearchableCourse[] = indexData.filter((course) => {
+  let results: CourseItem[] = indexData.filter((course) => {
     let matches = true;
 
     // Non-keyword filters remain the same
@@ -219,7 +219,7 @@ self.addEventListener("message", (event) => {
     : [];
 
   // Add HTML highlighting for all results
-  const enhancedResults = results.map((course) => {
+  let sortedResults: SearchableCourse[] = results.map((course) => {
     let titleHTML = course.title;
     let descriptionHTML = course.description;
     let courseIdHTML = course.id;
@@ -249,7 +249,7 @@ self.addEventListener("message", (event) => {
     const normalizedKeywords = query.keywords.toLowerCase().trim();
 
     // Calculate scores for courses with keyword matches
-    const scoredResults = enhancedResults
+    sortedResults = sortedResults
       .map((course) => {
         const titleScore = getMatchScore(normalizedKeywords, course.title);
         const descriptionScore = getMatchScore(normalizedKeywords, course.description);
@@ -259,15 +259,11 @@ self.addEventListener("message", (event) => {
       })
       .filter((course) => course.score > 0)
       .sort((a, b) => b.score - a.score); // Sort by score descending
-
-    results = scoredResults;
-  } else {
-    results = enhancedResults;
   }
 
   // Sort results based on the sort parameter
   if (query.sort) {
-    results.sort((a, b) => {
+    sortedResults.sort((a, b) => {
       let comparison = 0;
 
       switch (query.sort) {
@@ -322,5 +318,5 @@ self.addEventListener("message", (event) => {
     });
   }
 
-  port.postMessage({ results });
+  port.postMessage({ results: sortedResults, lastUpdated: data.lastUpdated } satisfies WorkerResponseData);
 });
