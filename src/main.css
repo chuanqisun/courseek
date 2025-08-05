@@ -34,3 +34,105 @@ body {
 .hidden {
   display: none !important;
 }
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: auto 2fr;
+  height: 100vh;
+}
+
+.search-form {
+  overflow-y: auto;
+}
+
+.results-panel {
+  overflow-y: auto;
+}
+
+.search-form {
+  padding: 2ch;
+  gap: 2ch;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-form > * {
+  margin-bottom: 2ch;
+}
+
+.search-form > *:last-child {
+  margin-bottom: 0;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1ch;
+}
+
+legend {
+  font-weight: bold;
+  color: var(--color-text-active);
+  margin-bottom: 1ch;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 0.25ch 1ch;
+  flex-wrap: wrap;
+}
+
+label.block-field {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 0.25ch;
+  align-items: start;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="number"] {
+  padding: 0.5ch;
+  background: var(--page-background);
+  border: 1px solid var(--color-text-secondary);
+  color: var(--color-text);
+}
+
+input[type="text"],
+input[type="search"] {
+  width: 100%;
+}
+
+input[type="number"] {
+  width: 5ch;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus {
+  outline: 1px solid var(--color-text-active);
+  border-color: var(--color-text-active);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  margin: 0;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1ch;
+}
+
+.form-row {
+  display: flex;
+  gap: 2ch;
+}
+
+.form-row > * {
+  flex: 1;
+}

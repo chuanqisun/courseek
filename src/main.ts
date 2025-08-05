@@ -149,138 +149,175 @@ const Main = createComponent(() => {
         </li>` as any;
 
       return html`
-        <input type="text" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
+        <div class="two-column-layout">
+          <div class="search-form">
+            <div class="form-section">
+              <label class="block-field">
+                <b>Search</b>
+                <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
+              </label>
+            </div>
 
-        <fieldset>
-          <legend>Terms</legend>
-          <label
-            ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} /> FA
-            (Fall)</label
-          >
-          <label
-            ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} /> JA
-            (January)</label
-          >
-          <label
-            ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} /> SP
-            (Spring)</label
-          >
-          <label
-            ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} /> SU
-            (Summer)</label
-          >
-        </fieldset>
+            <fieldset>
+              <legend>Terms</legend>
+              <label
+                ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
+                Fall</label
+              >
+              <label
+                ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
+                January</label
+              >
+              <label
+                ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} />
+                Spring</label
+              >
+              <label
+                ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} />
+                Summer</label
+              >
+            </fieldset>
 
-        <fieldset>
-          <legend>Level</legend>
-          <label
-            ><input type="radio" name="level" value="" @change=${handleLevelChange} .checked=${currentLevel === ""} />
-            Both</label
-          >
-          <label
-            ><input type="radio" name="level" value="U" @change=${handleLevelChange} .checked=${currentLevel === "U"} />
-            Undergraduate</label
-          >
-          <label
-            ><input type="radio" name="level" value="G" @change=${handleLevelChange} .checked=${currentLevel === "G"} />
-            Graduate</label
-          >
-        </fieldset>
+            <fieldset>
+              <legend>Level</legend>
+              <label
+                ><input
+                  type="radio"
+                  name="level"
+                  value=""
+                  @change=${handleLevelChange}
+                  .checked=${currentLevel === ""}
+                />
+                Both</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="level"
+                  value="U"
+                  @change=${handleLevelChange}
+                  .checked=${currentLevel === "U"}
+                />
+                Undergraduate</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="level"
+                  value="G"
+                  @change=${handleLevelChange}
+                  .checked=${currentLevel === "G"}
+                />
+                Graduate</label
+              >
+            </fieldset>
 
-        <fieldset>
-          <legend>Units</legend>
-          <label>
-            Min Units:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("minUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.minUnits?.toString() || "")))}
-            />
-          </label>
-          <label>
-            Max Units:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("maxUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.maxUnits?.toString() || "")))}
-            />
-          </label>
-        </fieldset>
+            <fieldset>
+              <legend>Units</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minUnits?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxUnits?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
 
-        <fieldset>
-          <legend>Lecture Hours</legend>
-          <label>
-            Min Lecture Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("minLectureUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.minLectureUnits?.toString() || "")))}
-            />
-          </label>
-          <label>
-            Max Lecture Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("maxLectureUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.maxLectureUnits?.toString() || "")))}
-            />
-          </label>
-        </fieldset>
+            <fieldset>
+              <legend>Lecture Hours</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minLectureUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minLectureUnits?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxLectureUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxLectureUnits?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
 
-        <fieldset>
-          <legend>Lab Hours</legend>
-          <label>
-            Min Lab Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("minLabUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.minLabUnits?.toString() || "")))}
-            />
-          </label>
-          <label>
-            Max Lab Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("maxLabUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.maxLabUnits?.toString() || "")))}
-            />
-          </label>
-        </fieldset>
+            <fieldset>
+              <legend>Lab Hours</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minLabUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minLabUnits?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxLabUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxLabUnits?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
 
-        <fieldset>
-          <legend>Prep Work Hours</legend>
-          <label>
-            Min Prep Work Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("minPrepUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.minPrepUnits?.toString() || "")))}
-            />
-          </label>
-          <label>
-            Max Prep Work Hours:
-            <input
-              type="number"
-              min="0"
-              @input=${handleUnitsChange("maxPrepUnits")}
-              .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
-            />
-          </label>
-        </fieldset>
+            <fieldset>
+              <legend>Prep Hours</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minPrepUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minPrepUnits?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxPrepUnits")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
+          </div>
 
-        <h2>Results (${items.length})</h2>
-        <lit-virtualizer
-          .items=${items}
-          .keyFunction=${(item: any) => item.id}
-          .renderItem=${renderItem}
-        ></lit-virtualizer>
+          <div class="results-panel">
+            <h2>Results (${items.length})</h2>
+            <lit-virtualizer
+              .items=${items}
+              .keyFunction=${(item: any) => item.id}
+              .renderItem=${renderItem}
+            ></lit-virtualizer>
+          </div>
+        </div>
       `;
     }),
     mergeWith(effects$),
