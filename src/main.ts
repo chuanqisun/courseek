@@ -453,7 +453,7 @@ const Main = createComponent(() => {
                 <label class="block-field">
                   <b>Numbers</b>
                   <input
-                    type="text"
+                    type="search"
                     name="numbers"
                     @input=${handleNumbersChange}
                     .value=${observe(numbers.value$)}
