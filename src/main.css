@@ -97,6 +97,7 @@ input[type="search"] {
 
 input[type="number"] {
   min-width: 5ch;
+  max-width: 8ch;
   field-sizing: content;
 }
 
@@ -120,6 +121,7 @@ input[type="radio"] {
 
 .form-row {
   display: flex;
+  gap: 1ch;
 }
 
 .form-row > * {
