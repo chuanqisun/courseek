@@ -39,11 +39,13 @@ body {
 
 .search-form {
   overflow-y: auto;
+  scrollbar-gutter: stable;
   background-color: white;
 }
 
 .results-panel {
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .search-form {
