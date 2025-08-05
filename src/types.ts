@@ -14,6 +14,31 @@ export interface CourseItem {
   final: boolean;
 }
 
+// Enhanced search result interface
+export interface SearchableCourse extends CourseItem {
+  score: number;
+  titleHTML: string;
+  descriptionHTML: string;
+  courseIdHTML: string;
+}
+
+export interface UnitsFilter {
+  minUnits?: number;
+  maxUnits?: number;
+  minLectureUnits?: number;
+  maxLectureUnits?: number;
+  minLabUnits?: number;
+  maxLabUnits?: number;
+  minPrepUnits?: number;
+  maxPrepUnits?: number;
+  minHours?: number;
+  maxHours?: number;
+  minSize?: number;
+  maxSize?: number;
+  minRating?: number;
+  maxRating?: number;
+}
+
 export interface Query {
   keywords?: string;
   numbers?: string;

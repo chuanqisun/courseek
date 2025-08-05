@@ -1,16 +1,9 @@
 /// <reference lib="webworker" />
 
 import data from "./data/latest.json";
-import type { CourseItem, HydrantRaw, Query } from "./types";
+import type { CourseItem, HydrantRaw, Query, SearchableCourse } from "./types";
 
 declare var self: DedicatedWorkerGlobalScope;
-
-// Enhanced search result interface
-interface SearchableCourse extends CourseItem {
-  score: number;
-  titleHTML: string;
-  descriptionHTML: string;
-}
 
 /**
  * Calculate match score for search terms
@@ -248,7 +241,7 @@ self.addEventListener("message", (event) => {
       descriptionHTML,
       courseIdHTML,
       score: 0, // Default score
-    } as SearchableCourse & { courseIdHTML: string };
+    } as SearchableCourse;
   });
 
   // Enhanced keyword search with scoring

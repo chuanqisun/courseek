@@ -6,17 +6,9 @@ import { BehaviorSubject, combineLatest, ignoreElements, map, merge, mergeWith, 
 import "./main.css";
 import { createComponent } from "./sdk/create-component";
 import { observe } from "./sdk/observe-directive";
-import { type CourseItem, type Query } from "./types";
+import { type Query, type SearchableCourse, type UnitsFilter } from "./types";
 import { useSearchParam } from "./url/url";
 import Worker from "./worker?worker";
-
-// Extended interface for search results with highlighted HTML
-interface SearchableCourse extends CourseItem {
-  score?: number;
-  titleHTML?: string;
-  descriptionHTML?: string;
-  courseIdHTML?: string;
-}
 
 const worker = new Worker();
 
@@ -59,23 +51,6 @@ const Main = createComponent(() => {
     name: "noFinal",
     initialValue: false,
   });
-
-  interface UnitsFilter {
-    minUnits?: number;
-    maxUnits?: number;
-    minLectureUnits?: number;
-    maxLectureUnits?: number;
-    minLabUnits?: number;
-    maxLabUnits?: number;
-    minPrepUnits?: number;
-    maxPrepUnits?: number;
-    minHours?: number;
-    maxHours?: number;
-    minSize?: number;
-    maxSize?: number;
-    minRating?: number;
-    maxRating?: number;
-  }
 
   const defaultUnits: UnitsFilter = {};
 
