@@ -37,7 +37,7 @@ export interface Query {
   maxRating?: number;
   level?: string;
   terms?: ("FA" | "JA" | "SP" | "SU")[];
-  sort?: "rating" | "hours" | "size";
+  sort?: "relevance" | "rating" | "hours" | "size" | "number";
   sortDirection?: "high" | "low" | "long" | "short" | "large" | "small";
   requireEval?: boolean;
 }

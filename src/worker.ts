@@ -111,7 +111,7 @@ self.addEventListener("message", (event) => {
 
   const query = event.data as Query;
 
-  let results = indexData.filter((course) => {
+  let results: CourseItem[] | SearchableCourse[] = indexData.filter((course) => {
     let matches = true;
 
     // Non-keyword filters remain the same
@@ -278,6 +278,9 @@ self.addEventListener("message", (event) => {
       let comparison = 0;
 
       switch (query.sort) {
+        case "relevance":
+          comparison = ((b as SearchableCourse).score || 0) - ((a as SearchableCourse).score || 0); // Always higher relevance first
+          break;
         case "rating":
           comparison = b.rating - a.rating; // Default: higher rating first
           if (query.sortDirection === "low") comparison = -comparison;
@@ -289,6 +292,34 @@ self.addEventListener("message", (event) => {
         case "size":
           comparison = a.size - b.size; // Default: lower size first
           if (query.sortDirection === "large") comparison = -comparison;
+          break;
+        case "number":
+          // Sort course numbers alphanumerically (0-9a-z)
+          // Examples: "6.001" < "11.S197" < "21W.225" < "STS.095"
+          const getNormalizedCourseId = (courseId: string): string => {
+            // Split by periods and process each part
+            return courseId
+              .split(".")
+              .map((part) => {
+                // For each part, separate numbers and letters
+                // e.g., "21W" -> "021W", "S197" -> "S197", "001" -> "001"
+                const match = part.match(/^(\d*)([A-Za-z]*)(\d*)$/);
+                if (match) {
+                  const [, leadingNum, letters, trailingNum] = match;
+                  // Pad numbers with zeros for proper sorting
+                  const paddedLeadingNum = leadingNum ? leadingNum.padStart(4, "0") : "";
+                  const paddedTrailingNum = trailingNum ? trailingNum.padStart(4, "0") : "";
+                  return paddedLeadingNum + letters.toUpperCase() + paddedTrailingNum;
+                }
+                return part.toUpperCase();
+              })
+              .join(".");
+          };
+
+          const aNormalized = getNormalizedCourseId(a.id);
+          const bNormalized = getNormalizedCourseId(b.id);
+          comparison = aNormalized.localeCompare(bNormalized); // Default: alphanumeric order
+          if (query.sortDirection === "high") comparison = -comparison;
           break;
         default:
           return 0;

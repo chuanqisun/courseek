@@ -35,9 +35,9 @@ const Main = createComponent(() => {
     name: "level",
     initialValue: "",
   });
-  const selectedSort = useSearchParam<"rating" | "hours" | "size">({
+  const selectedSort = useSearchParam<"relevance" | "rating" | "hours" | "size" | "number">({
     name: "sort",
-    initialValue: "rating",
+    initialValue: "relevance",
   });
   const selectedSortDirection = useSearchParam<"high" | "low" | "long" | "short" | "large" | "small">({
     name: "sortDir",
@@ -154,11 +154,14 @@ const Main = createComponent(() => {
 
   const handleSortChange = (event: Event) => {
     const radio = event.target as HTMLInputElement;
-    const newSort = radio.value as "rating" | "hours" | "size";
+    const newSort = radio.value as "relevance" | "rating" | "hours" | "size" | "number";
     selectedSort.set(newSort);
 
     // Set default direction for each sort type
     switch (newSort) {
+      case "relevance":
+        selectedSortDirection.set("high"); // Always high relevance first
+        break;
       case "rating":
         selectedSortDirection.set("high");
         break;
@@ -168,15 +171,21 @@ const Main = createComponent(() => {
       case "size":
         selectedSortDirection.set("small");
         break;
+      case "number":
+        selectedSortDirection.set("low");
+        break;
     }
   };
 
-  const handleSortDirectionChangeForDimension = (sortType: "rating" | "hours" | "size") => () => {
+  const handleSortDirectionChangeForDimension = (sortType: "relevance" | "rating" | "hours" | "size" | "number") => () => {
     // First, switch to this sort dimension if not already selected
     if (selectedSort.value$.value !== sortType) {
       selectedSort.set(sortType);
       // Set default direction for the new sort type
       switch (sortType) {
+        case "relevance":
+          selectedSortDirection.set("high"); // Always high relevance first
+          break;
         case "rating":
           selectedSortDirection.set("high");
           break;
@@ -186,9 +195,16 @@ const Main = createComponent(() => {
         case "size":
           selectedSortDirection.set("small");
           break;
+        case "number":
+          selectedSortDirection.set("low");
+          break;
       }
     } else {
-      // If already selected, toggle the direction
+      // If already selected, toggle the direction (except for relevance which is always high)
+      if (sortType === "relevance") {
+        return; // No toggle for relevance, always high
+      }
+      
       const currentDirection = selectedSortDirection.value$.value;
       switch (sortType) {
         case "rating":
@@ -199,6 +215,9 @@ const Main = createComponent(() => {
           break;
         case "size":
           selectedSortDirection.set(currentDirection === "small" ? "large" : "small");
+          break;
+        case "number":
+          selectedSortDirection.set(currentDirection === "low" ? "high" : "low");
           break;
       }
     }
@@ -246,7 +265,7 @@ const Main = createComponent(() => {
     numbers.set("");
     selectedTerms.set([]);
     selectedLevel.set("");
-    selectedSort.set("rating");
+    selectedSort.set("relevance");
     selectedSortDirection.set("high");
     requireEval.set(false);
     halfTerm.set(false);
@@ -479,6 +498,16 @@ const Main = createComponent(() => {
                   ><input
                     type="radio"
                     name="sort"
+                    value="relevance"
+                    @change=${handleSortChange}
+                    .checked=${currentSort === "relevance"}
+                  />
+                  Relevance</label
+                >
+                <label class="sort-label"
+                  ><input
+                    type="radio"
+                    name="sort"
                     value="rating"
                     @change=${handleSortChange}
                     .checked=${currentSort === "rating"}
@@ -512,6 +541,19 @@ const Main = createComponent(() => {
                   Size
                   <button type="button" @click=${handleSortDirectionChangeForDimension("size")}>
                     ${currentSort === "size" ? (currentSortDirection === "small" ? "small" : "large") : "small"}
+                  </button></label
+                >
+                <label class="sort-label"
+                  ><input
+                    type="radio"
+                    name="sort"
+                    value="number"
+                    @change=${handleSortChange}
+                    .checked=${currentSort === "number"}
+                  />
+                  Number
+                  <button type="button" @click=${handleSortDirectionChangeForDimension("number")}>
+                    ${currentSort === "number" ? (currentSortDirection === "low" ? "low" : "high") : "low"}
                   </button></label
                 >
               </fieldset>
