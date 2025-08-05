@@ -13,8 +13,19 @@ const worker = new Worker();
 
 const Main = createComponent(() => {
   const title = useSearchParam<string>({ name: "title", initialValue: "" });
+  const selectedTerms = useSearchParam<("FA" | "JA" | "SP" | "SU")[]>({
+    name: "terms",
+    initialValue: [],
+    codec: {
+      encode: (value) => value.join(","),
+      decode: (value) => (value ? (value.split(",") as ("FA" | "JA" | "SP" | "SU")[]) : []),
+    },
+  });
+  const selectedLevel = useSearchParam<"G" | "U" | "">({
+    name: "level",
+    initialValue: "",
+  });
   const activeItems$ = new BehaviorSubject<CourseItem[]>([]);
-  const selectedTerms$ = new BehaviorSubject<("FA" | "JA" | "SP" | "SU")[]>([]);
 
   const handleTitleChange = (event: Event) => {
     title.replace((event.target as HTMLInputElement).value.trim());
@@ -22,21 +33,27 @@ const Main = createComponent(() => {
 
   const handleTermChange = (term: "FA" | "JA" | "SP" | "SU") => (event: Event) => {
     const checkbox = event.target as HTMLInputElement;
-    const currentTerms = selectedTerms$.value;
+    const currentTerms = selectedTerms.value$.value;
 
     if (checkbox.checked) {
-      selectedTerms$.next([...currentTerms, term]);
+      selectedTerms.set([...currentTerms, term]);
     } else {
-      selectedTerms$.next(currentTerms.filter((t) => t !== term));
+      selectedTerms.set(currentTerms.filter((t) => t !== term));
     }
   };
 
-  const search$ = combineLatest([title.value$, selectedTerms$]).pipe(
+  const handleLevelChange = (event: Event) => {
+    const radio = event.target as HTMLInputElement;
+    selectedLevel.set(radio.value as "G" | "U" | "");
+  };
+
+  const search$ = combineLatest([title.value$, selectedTerms.value$, selectedLevel.value$]).pipe(
     tap({ subscribe: () => console.log("searching...") }),
-    switchMap(async ([titleValue, selectedTerms]) => {
+    switchMap(async ([titleValue, selectedTerms, selectedLevel]) => {
       const fullQuery: Query = {
         title: titleValue,
         terms: selectedTerms.length > 0 ? selectedTerms : undefined,
+        level: selectedLevel || undefined,
       };
       const ports = new MessageChannel();
       worker.postMessage(fullQuery, [ports.port2]);
@@ -53,8 +70,8 @@ const Main = createComponent(() => {
   );
 
   const effects$ = merge(search$).pipe(ignoreElements());
-  const template = activeItems$.pipe(
-    map((items) => {
+  const template = combineLatest([activeItems$, selectedTerms.value$, selectedLevel.value$]).pipe(
+    map(([items, currentTerms, currentLevel]) => {
       const renderItem: RenderItemFunction<CourseItem> = (item) =>
         html`<li>
           <strong>${item.id} ${item.title}</strong> (${item.units} units, ${item.level})<br />
@@ -69,10 +86,38 @@ const Main = createComponent(() => {
 
         <fieldset>
           <legend>Terms</legend>
-          <label><input type="checkbox" @change=${handleTermChange("FA")} /> FA (Fall)</label>
-          <label><input type="checkbox" @change=${handleTermChange("JA")} /> JA (January)</label>
-          <label><input type="checkbox" @change=${handleTermChange("SP")} /> SP (Spring)</label>
-          <label><input type="checkbox" @change=${handleTermChange("SU")} /> SU (Summer)</label>
+          <label
+            ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} /> FA
+            (Fall)</label
+          >
+          <label
+            ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} /> JA
+            (January)</label
+          >
+          <label
+            ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} /> SP
+            (Spring)</label
+          >
+          <label
+            ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} /> SU
+            (Summer)</label
+          >
+        </fieldset>
+
+        <fieldset>
+          <legend>Level</legend>
+          <label
+            ><input type="radio" name="level" value="" @change=${handleLevelChange} .checked=${currentLevel === ""} />
+            Both</label
+          >
+          <label
+            ><input type="radio" name="level" value="U" @change=${handleLevelChange} .checked=${currentLevel === "U"} />
+            Undergraduate</label
+          >
+          <label
+            ><input type="radio" name="level" value="G" @change=${handleLevelChange} .checked=${currentLevel === "G"} />
+            Graduate</label
+          >
         </fieldset>
 
         <h2>Results (${items.length})</h2>
