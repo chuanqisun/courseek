@@ -71,6 +71,8 @@ const Main = createComponent(() => {
     maxHours?: number;
     minSize?: number;
     maxSize?: number;
+    minRating?: number;
+    maxRating?: number;
   }
 
   const defaultUnits: UnitsFilter = {};
@@ -93,6 +95,8 @@ const Main = createComponent(() => {
           value.maxHours ?? "",
           value.minSize ?? "",
           value.maxSize ?? "",
+          value.minRating ?? "",
+          value.maxRating ?? "",
         ];
         const hasAnyValue = values.some((v) => v !== "");
         return hasAnyValue ? values.join(",") : "";
@@ -100,7 +104,7 @@ const Main = createComponent(() => {
       decode: (value) => {
         if (!value) return defaultUnits;
         const parts = value.split(",");
-        if (parts.length !== 12) return defaultUnits;
+        if (parts.length !== 14) return defaultUnits;
         return {
           minUnits: parts[0] ? parseInt(parts[0], 10) || 0 : undefined,
           maxUnits: parts[1] ? parseInt(parts[1], 10) || 0 : undefined,
@@ -114,6 +118,8 @@ const Main = createComponent(() => {
           maxHours: parts[9] ? parseInt(parts[9], 10) || 0 : undefined,
           minSize: parts[10] ? parseInt(parts[10], 10) || 0 : undefined,
           maxSize: parts[11] ? parseInt(parts[11], 10) || 0 : undefined,
+          minRating: parts[12] ? parseFloat(parts[12]) || 0 : undefined,
+          maxRating: parts[13] ? parseFloat(parts[13]) || 0 : undefined,
         };
       },
     },
@@ -215,7 +221,16 @@ const Main = createComponent(() => {
   const handleUnitsChange = (field: keyof UnitsFilter) => (event: Event) => {
     const input = event.target as HTMLInputElement;
     const inputValue = input.value.trim();
-    const value = inputValue === "" ? undefined : parseInt(inputValue, 10) || 0;
+    let value: number | undefined;
+
+    if (inputValue === "") {
+      value = undefined;
+    } else if (field === "minRating" || field === "maxRating") {
+      value = parseFloat(inputValue) || 0;
+    } else {
+      value = parseInt(inputValue, 10) || 0;
+    }
+
     const currentUnits = units.value$.value;
     units.set({ ...currentUnits, [field]: value });
   };
@@ -300,6 +315,8 @@ const Main = createComponent(() => {
           maxHours: unitsValue.maxHours,
           minSize: unitsValue.minSize,
           maxSize: unitsValue.maxSize,
+          minRating: unitsValue.minRating,
+          maxRating: unitsValue.maxRating,
         };
         const ports = new MessageChannel();
         worker.postMessage(fullQuery, [ports.port2]);
@@ -341,8 +358,9 @@ const Main = createComponent(() => {
         currentNoPrereq,
         currentNoFinal,
       ]) => {
-        const renderItem: RenderItemFunction<SearchableCourse> = (item) =>
-          html`<div class="course-card">
+        const renderItem: RenderItemFunction<SearchableCourse> = (item) => {
+          if (!item?.id) return null;
+          return html`<div class="course-card">
             <div class="course-title">
               <strong>
                 <a
@@ -410,6 +428,7 @@ const Main = createComponent(() => {
               ${item.half ? html` · Half term` : ""} ${!item.final ? html` · No final` : ""}
             </div>
           </div>` as any;
+        };
 
         return html`
           <div class="two-column-layout">
@@ -641,6 +660,32 @@ const Main = createComponent(() => {
               </fieldset>
 
               <fieldset>
+                <legend>Rating</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      @input=${handleUnitsChange("minRating")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minRating?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      @input=${handleUnitsChange("maxRating")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxRating?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
                 <legend>Hours</legend>
                 <div class="form-row">
                   <label>
@@ -694,7 +739,9 @@ const Main = createComponent(() => {
                 ? html`<div style="color: #888; padding: 2ch;">No course found</div>`
                 : html`<lit-virtualizer
                     .items=${items}
-                    .keyFunction=${(item: any) => item.id}
+                    .keyFunction=${(item: any) => {
+                      return item?.id;
+                    }}
                     .renderItem=${renderItem}
                   ></lit-virtualizer>`}
             </div>

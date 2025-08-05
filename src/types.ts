@@ -32,6 +32,8 @@ export interface Query {
   maxHours?: number;
   minSize?: number;
   maxSize?: number;
+  minRating?: number;
+  maxRating?: number;
   level?: string;
   terms?: ("FA" | "JA" | "SP" | "SU")[];
   sort?: "rating" | "hours" | "size";

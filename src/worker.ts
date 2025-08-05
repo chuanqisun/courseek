@@ -172,6 +172,12 @@ self.addEventListener("message", (event) => {
       matches = matches && course.size >= lowerbound && course.size <= upperbound;
     }
 
+    if (query.minRating !== undefined || query.maxRating !== undefined) {
+      const lowerbound = query.minRating ?? 0;
+      const upperbound = query.maxRating ?? Infinity;
+      matches = matches && course.rating >= lowerbound && course.rating <= upperbound;
+    }
+
     if (query.requireEval) {
       // Filter out courses with no evaluation data (0 hours, 0 rating, or 0 size)
       matches = matches && course.hours > 0 && course.rating > 0 && course.size > 0;

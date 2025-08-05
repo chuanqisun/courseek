@@ -96,7 +96,8 @@ input[type="search"] {
 }
 
 input[type="number"] {
-  width: 5ch;
+  min-width: 5ch;
+  field-sizing: content;
 }
 
 input[type="text"]:focus,
