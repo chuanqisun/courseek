@@ -1,6 +1,7 @@
+import "@lit-labs/virtualizer";
+import type { RenderItemFunction } from "@lit-labs/virtualizer/virtualize.js";
 import { html, render } from "lit-html";
-import { repeat } from "lit-html/directives/repeat.js";
-import { BehaviorSubject, debounceTime, ignoreElements, map, merge, mergeWith, switchMap, tap } from "rxjs";
+import { BehaviorSubject, ignoreElements, map, merge, mergeWith, switchMap, tap } from "rxjs";
 import "./main.css";
 import { createComponent } from "./sdk/create-component";
 import { observe } from "./sdk/observe-directive";
@@ -20,7 +21,6 @@ const Main = createComponent(() => {
 
   const search$ = title.value$.pipe(
     tap({ subscribe: () => console.log("searching...") }),
-    debounceTime(200),
     switchMap(async (title) => {
       const fullQuery: Query = { title };
       const ports = new MessageChannel();
@@ -39,27 +39,27 @@ const Main = createComponent(() => {
 
   const effects$ = merge(search$).pipe(ignoreElements());
   const template = activeItems$.pipe(
-    map(
-      (items) => html`
+    map((items) => {
+      const renderItem: RenderItemFunction<CourseItem> = (item) =>
+        html`<li>
+          <strong>${item.id} ${item.title}</strong> (${item.units} units, ${item.level})<br />
+          <em>${item.instructor}</em><br />
+          <p>${item.description}</p>
+          <small>Semester: ${item.semesters.join(" | ")}</small>
+          <small>Prereq: ${item.prereq}</small>
+        </li>` as any;
+
+      return html`
         <input type="text" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
 
         <h2>Results (${items.length})</h2>
-        <ul>
-          ${repeat(
-            items,
-            (item) => item.id,
-            (item) =>
-              html`<li>
-                <strong>${item.title}</strong> (${item.units} units, ${item.level})<br />
-                <em>${item.instructor}</em><br />
-                <p>${item.description}</p>
-                <small>Semester: ${item.semesters.join(" | ")}</small>
-                <small>Prereq: ${item.prereq}</small>
-              </li>`,
-          )}
-        </ul>
-      `,
-    ),
+        <lit-virtualizer
+          .items=${items}
+          .keyFunction=${(item: any) => item.id}
+          .renderItem=${renderItem}
+        ></lit-virtualizer>
+      `;
+    }),
     mergeWith(effects$),
   );
 

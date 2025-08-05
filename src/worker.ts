@@ -1,19 +1,19 @@
 /// <reference lib="webworker" />
 
-import data from "./data/2025-fall-course.json";
-import type { CourseItem, CourseItemRaw, Query } from "./types";
+import data from "./data/latest.json";
+import type { CourseItem, HydrantRaw, Query } from "./types";
 
 declare var self: DedicatedWorkerGlobalScope;
 
-const indexData: CourseItem[] = (data as CourseItemRaw[]).map((course) => ({
-  ...course,
-  id: course.title.split(" - ")[0].trim(),
-  title: course.title.slice(course.title.indexOf(" - ") + 3).trim(),
-  semesters: course.semester
-    .split(",")
-    .flatMap((s) => s.split("and"))
-    .map((s) => s.trim())
-    .filter(Boolean),
+const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([courseId, course]) => ({
+  id: courseId,
+  title: course.name,
+  instructor: course.inCharge,
+  description: course.description,
+  semesters: course.terms,
+  level: course.level,
+  prereq: course.prereqs,
+  units: Array.isArray(course.units) ? course.units.join("-") : course.units || "",
 }));
 
 self.addEventListener("message", (event) => {
