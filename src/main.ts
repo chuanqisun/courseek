@@ -445,7 +445,7 @@ const Main = createComponent(() => {
             </div>
 
             <div class="course-meta-secondary">
-              ${item.instructor ? html`${item.instructor} · ` : ""}Prereq: ${item.prereq}
+              ${item.instructor ? html`${unsafeHTML(item.instructorHTML)} · ` : ""}Prereq: ${item.prereq}
               ${item.half ? html` · Half term` : ""} ${!item.final ? html` · No final` : ""}
             </div>
           </div>` as any;

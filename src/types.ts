@@ -25,6 +25,7 @@ export interface SearchableCourse extends CourseItem {
   titleHTML: string;
   descriptionHTML: string;
   courseIdHTML: string;
+  instructorHTML: string;
 }
 
 export interface UnitsFilter {

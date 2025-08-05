@@ -223,11 +223,13 @@ self.addEventListener("message", (event) => {
     let titleHTML = course.title;
     let descriptionHTML = course.description;
     let courseIdHTML = course.id;
+    let instructorHTML = course.instructor;
 
     // Apply keyword highlighting if present
     if (query.keywords) {
       titleHTML = highlightMatches(titleHTML, query.keywords);
       descriptionHTML = highlightMatches(descriptionHTML, query.keywords);
+      instructorHTML = highlightMatches(instructorHTML, query.keywords);
     }
 
     // Apply number prefix highlighting if present
@@ -240,6 +242,7 @@ self.addEventListener("message", (event) => {
       titleHTML,
       descriptionHTML,
       courseIdHTML,
+      instructorHTML,
       score: 0, // Default score
     } as SearchableCourse;
   });
@@ -253,7 +256,8 @@ self.addEventListener("message", (event) => {
       .map((course) => {
         const titleScore = getMatchScore(normalizedKeywords, course.title);
         const descriptionScore = getMatchScore(normalizedKeywords, course.description);
-        const totalScore = Math.max(titleScore, descriptionScore * 0.8); // Weight title matches higher
+        const instructorScore = getMatchScore(normalizedKeywords, course.instructor);
+        const totalScore = Math.max(titleScore, descriptionScore * 0.8, instructorScore * 0.9); // Weight: title > instructor > description
 
         return { ...course, score: totalScore };
       })
