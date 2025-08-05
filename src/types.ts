@@ -16,6 +16,7 @@ export interface CourseItem {
 
 export interface Query {
   keywords?: string;
+  numbers?: string;
   semester?: string;
   noPrereq?: boolean;
   halfTerm?: boolean;

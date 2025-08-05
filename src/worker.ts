@@ -66,6 +66,25 @@ function highlightMatches(text: string, searchTerm: string): string {
   return text.replace(regex, "<mark>$1</mark>");
 }
 
+/**
+ * Create highlighted HTML for matching number prefixes
+ */
+function highlightNumberPrefixes(courseId: string, numberPrefixes: string[]): string {
+  if (!numberPrefixes.length) return courseId;
+
+  // Find matching prefixes and highlight them
+  let highlightedId = courseId;
+  for (const prefix of numberPrefixes) {
+    if (courseId.toLowerCase().startsWith(prefix.toLowerCase())) {
+      const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`^(${escapedPrefix})`, "i");
+      highlightedId = highlightedId.replace(regex, "<mark>$1</mark>");
+      break; // Only highlight the first matching prefix
+    }
+  }
+  return highlightedId;
+}
+
 const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([, course]) => ({
   id: course.number,
   title: course.name,
@@ -183,33 +202,73 @@ self.addEventListener("message", (event) => {
       matches = matches && course.hours > 0 && course.rating > 0 && course.size > 0;
     }
 
+    if (query.numbers) {
+      // Filter by course number prefixes
+      const numberPrefixes = query.numbers
+        .split(",")
+        .map(n => n.trim().toLowerCase())
+        .filter(n => n.length > 0);
+      
+      if (numberPrefixes.length > 0) {
+        matches = matches && numberPrefixes.some(prefix => 
+          course.id.toLowerCase().startsWith(prefix)
+        );
+      }
+    }
+
     return matches;
   });
 
-  // Enhanced keyword search with scoring and highlighting
+  // Parse number prefixes for highlighting
+  const numberPrefixes = query.numbers 
+    ? query.numbers.split(",").map(n => n.trim()).filter(n => n.length > 0)
+    : [];
+
+  // Add HTML highlighting for all results
+  const enhancedResults = results.map((course) => {
+    let titleHTML = course.title;
+    let descriptionHTML = course.description;
+    let courseIdHTML = course.id;
+
+    // Apply keyword highlighting if present
+    if (query.keywords) {
+      titleHTML = highlightMatches(titleHTML, query.keywords);
+      descriptionHTML = highlightMatches(descriptionHTML, query.keywords);
+    }
+
+    // Apply number prefix highlighting if present
+    if (numberPrefixes.length > 0) {
+      courseIdHTML = highlightNumberPrefixes(course.id, numberPrefixes);
+    }
+
+    return {
+      ...course,
+      titleHTML,
+      descriptionHTML,
+      courseIdHTML,
+      score: 0, // Default score
+    } as SearchableCourse & { courseIdHTML: string };
+  });
+
+  // Enhanced keyword search with scoring
   if (query.keywords) {
     const normalizedKeywords = query.keywords.toLowerCase().trim();
 
-    // Calculate scores and add highlighting for matching courses
-    const scoredResults = results
+    // Calculate scores for courses with keyword matches
+    const scoredResults = enhancedResults
       .map((course) => {
         const titleScore = getMatchScore(normalizedKeywords, course.title);
         const descriptionScore = getMatchScore(normalizedKeywords, course.description);
         const totalScore = Math.max(titleScore, descriptionScore * 0.8); // Weight title matches higher
 
-        if (totalScore === 0) return null;
-
-        return {
-          ...course,
-          score: totalScore,
-          titleHTML: highlightMatches(course.title, query.keywords!),
-          descriptionHTML: highlightMatches(course.description, query.keywords!),
-        } as SearchableCourse;
+        return { ...course, score: totalScore };
       })
-      .filter((course): course is SearchableCourse => course !== null)
+      .filter(course => course.score > 0)
       .sort((a, b) => b.score - a.score); // Sort by score descending
 
     results = scoredResults;
+  } else {
+    results = enhancedResults;
   }
 
   // Sort results based on the sort parameter

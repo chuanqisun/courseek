@@ -15,12 +15,14 @@ interface SearchableCourse extends CourseItem {
   score?: number;
   titleHTML?: string;
   descriptionHTML?: string;
+  courseIdHTML?: string;
 }
 
 const worker = new Worker();
 
 const Main = createComponent(() => {
   const title = useSearchParam<string>({ name: "title", initialValue: "" });
+  const numbers = useSearchParam<string>({ name: "numbers", initialValue: "" });
   const selectedTerms = useSearchParam<("FA" | "JA" | "SP" | "SU")[]>({
     name: "terms",
     initialValue: ["FA"],
@@ -130,6 +132,10 @@ const Main = createComponent(() => {
     title.replace((event.target as HTMLInputElement).value.trim());
   };
 
+  const handleNumbersChange = (event: Event) => {
+    numbers.replace((event.target as HTMLInputElement).value.trim());
+  };
+
   const handleTermChange = (term: "FA" | "JA" | "SP" | "SU") => (event: Event) => {
     const checkbox = event.target as HTMLInputElement;
     const currentTerms = selectedTerms.value$.value;
@@ -237,6 +243,7 @@ const Main = createComponent(() => {
 
   const handleReset = () => {
     title.set("");
+    numbers.set("");
     selectedTerms.set([]);
     selectedLevel.set("");
     selectedSort.set("rating");
@@ -269,6 +276,7 @@ const Main = createComponent(() => {
 
   const search$ = combineLatest([
     title.value$,
+    numbers.value$,
     selectedTerms.value$,
     selectedLevel.value$,
     selectedSort.value$,
@@ -283,6 +291,7 @@ const Main = createComponent(() => {
     switchMap(
       async ([
         titleValue,
+        numbersValue,
         selectedTerms,
         selectedLevel,
         selectedSort,
@@ -295,6 +304,7 @@ const Main = createComponent(() => {
       ]) => {
         const fullQuery: Query = {
           keywords: titleValue,
+          numbers: numbersValue,
           terms: selectedTerms.length > 0 ? selectedTerms : undefined,
           level: selectedLevel || undefined,
           sort: selectedSort,
@@ -367,7 +377,8 @@ const Main = createComponent(() => {
                   href="https://student.mit.edu/catalog/search.cgi?search=${item.id}"
                   target="_blank"
                   class="course-eval-link"
-                  >${item.id} ${item.titleHTML ? unsafeHTML(item.titleHTML) : item.title}</a
+                  >${item.courseIdHTML ? unsafeHTML(item.courseIdHTML) : item.id}
+                  ${item.titleHTML ? unsafeHTML(item.titleHTML) : item.title}</a
                 >
               </strong>
               <div class="course-meta-primary">
@@ -435,8 +446,19 @@ const Main = createComponent(() => {
             <div class="search-form">
               <div class="form-section">
                 <label class="block-field">
-                  <b>Search</b>
+                  <b>Keywords</b>
                   <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
+                </label>
+
+                <label class="block-field">
+                  <b>Numbers</b>
+                  <input
+                    type="text"
+                    name="numbers"
+                    @input=${handleNumbersChange}
+                    .value=${observe(numbers.value$)}
+                    placeholder="6.001, MAS, 21M"
+                  />
                 </label>
 
                 <p>${items.length} courses</p>
@@ -444,7 +466,7 @@ const Main = createComponent(() => {
 
               <div class="form-actions">
                 <button type="button" @click=${handleReset}>Reset</button>
-                <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
+                <button type="button" @click=${handleDownloadLLMsTxt}>llms.txt</button>
               </div>
 
               <fieldset>

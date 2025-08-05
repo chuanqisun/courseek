@@ -115,6 +115,7 @@ input[type="radio"] {
 .form-section {
   display: flex;
   flex-direction: column;
+  gap: 1ch;
 }
 
 .form-row {
@@ -191,4 +192,10 @@ button:active {
 
 .course-eval-link:hover {
   text-decoration: underline;
+}
+
+mark {
+  background-color: yellow;
+  color: black;
+  padding: 0;
 }
