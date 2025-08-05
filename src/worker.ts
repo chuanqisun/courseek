@@ -6,7 +6,7 @@ import type { CourseItem, HydrantRaw, Query } from "./types";
 declare var self: DedicatedWorkerGlobalScope;
 
 const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([courseId, course]) => ({
-  id: courseId,
+  id: course.number,
   title: course.name,
   instructor: course.inCharge,
   description: course.description,
