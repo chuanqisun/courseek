@@ -44,7 +44,6 @@ body {
 
 .results-panel {
   overflow-y: auto;
-  padding: 2ch;
 }
 
 .search-form {
@@ -159,7 +158,8 @@ button:active {
 
 .course-card {
   padding: 2ch;
-  border-bottom: 1px solid var(--color-text-secondary);
+  width: 100%;
+  background: white;
   display: flex;
   flex-direction: column;
   gap: 1ch;
