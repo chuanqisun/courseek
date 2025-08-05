@@ -586,7 +586,7 @@ const Main = createComponent(() => {
               </fieldset>
 
               <fieldset>
-                <legend>Units</legend>
+                <legend>Total units</legend>
                 <div class="form-row">
                   <label>
                     Min
@@ -754,6 +754,7 @@ const Main = createComponent(() => {
                   </label>
                 </div>
               </fieldset>
+              <a class="support-link" href="https://github.com/chuanqisun/courseek">File a bug</a>
             </div>
 
             <div class="results-panel">

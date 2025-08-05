@@ -189,12 +189,12 @@ button:active {
   font-size: inherit;
 }
 
-.course-eval-link {
+a {
   color: inherit;
   text-decoration: none;
 }
 
-.course-eval-link:hover {
+a:hover {
   text-decoration: underline;
 }
 
@@ -202,4 +202,8 @@ mark {
   background-color: yellow;
   color: black;
   padding: 0;
+}
+
+.support-link {
+  color: var(--color-text-secondary);
 }
