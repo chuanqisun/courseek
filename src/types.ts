@@ -1,19 +1,9 @@
-export interface CourseItemRaw {
-  title: string;
-  description: string;
-  instructor: string;
-  semester: string;
-  prereq: string;
-  units: string;
-  level: string;
-}
-
 export interface CourseItem {
   id: string;
   title: string;
   description: string;
   instructor: string;
-  semesters: string[];
+  terms: ("FA" | "JA" | "SP" | "SU")[];
   prereq: string;
   units: string;
   level: string;
@@ -26,6 +16,7 @@ export interface Query {
   prereq?: string;
   units?: string;
   level?: string;
+  terms?: ("FA" | "JA" | "SP" | "SU")[];
 }
 
 export interface HydrantRaw {
@@ -38,9 +29,11 @@ export interface HydrantItemRaw {
   name: string;
   description: string;
   number: string;
-  terms: string[];
+  terms: ("FA" | "JA" | "SP" | "SU")[];
   prereqs: string;
-  units: [lecture: number, lab: number, prep: number];
   level: string;
   inCharge: string;
+  labUnits?: number;
+  lectureUnits?: number;
+  preparationUnits?: number;
 }
