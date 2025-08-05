@@ -152,7 +152,7 @@ button:active {
   border-color: var(--color-text-active);
 }
 
-.sort-label {
+.sort-label:has(button) {
   justify-content: space-between;
 }
 

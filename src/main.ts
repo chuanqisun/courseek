@@ -177,51 +177,52 @@ const Main = createComponent(() => {
     }
   };
 
-  const handleSortDirectionChangeForDimension = (sortType: "relevance" | "rating" | "hours" | "size" | "number") => () => {
-    // First, switch to this sort dimension if not already selected
-    if (selectedSort.value$.value !== sortType) {
-      selectedSort.set(sortType);
-      // Set default direction for the new sort type
-      switch (sortType) {
-        case "relevance":
-          selectedSortDirection.set("high"); // Always high relevance first
-          break;
-        case "rating":
-          selectedSortDirection.set("high");
-          break;
-        case "hours":
-          selectedSortDirection.set("short");
-          break;
-        case "size":
-          selectedSortDirection.set("small");
-          break;
-        case "number":
-          selectedSortDirection.set("low");
-          break;
+  const handleSortDirectionChangeForDimension =
+    (sortType: "relevance" | "rating" | "hours" | "size" | "number") => () => {
+      // First, switch to this sort dimension if not already selected
+      if (selectedSort.value$.value !== sortType) {
+        selectedSort.set(sortType);
+        // Set default direction for the new sort type
+        switch (sortType) {
+          case "relevance":
+            selectedSortDirection.set("high"); // Always high relevance first
+            break;
+          case "rating":
+            selectedSortDirection.set("high");
+            break;
+          case "hours":
+            selectedSortDirection.set("short");
+            break;
+          case "size":
+            selectedSortDirection.set("small");
+            break;
+          case "number":
+            selectedSortDirection.set("low");
+            break;
+        }
+      } else {
+        // If already selected, toggle the direction (except for relevance which is always high)
+        if (sortType === "relevance") {
+          return; // No toggle for relevance, always high
+        }
+
+        const currentDirection = selectedSortDirection.value$.value;
+        switch (sortType) {
+          case "rating":
+            selectedSortDirection.set(currentDirection === "high" ? "low" : "high");
+            break;
+          case "hours":
+            selectedSortDirection.set(currentDirection === "short" ? "long" : "short");
+            break;
+          case "size":
+            selectedSortDirection.set(currentDirection === "small" ? "large" : "small");
+            break;
+          case "number":
+            selectedSortDirection.set(currentDirection === "low" ? "high" : "low");
+            break;
+        }
       }
-    } else {
-      // If already selected, toggle the direction (except for relevance which is always high)
-      if (sortType === "relevance") {
-        return; // No toggle for relevance, always high
-      }
-      
-      const currentDirection = selectedSortDirection.value$.value;
-      switch (sortType) {
-        case "rating":
-          selectedSortDirection.set(currentDirection === "high" ? "low" : "high");
-          break;
-        case "hours":
-          selectedSortDirection.set(currentDirection === "short" ? "long" : "short");
-          break;
-        case "size":
-          selectedSortDirection.set(currentDirection === "small" ? "large" : "small");
-          break;
-        case "number":
-          selectedSortDirection.set(currentDirection === "low" ? "high" : "low");
-          break;
-      }
-    }
-  };
+    };
 
   const handleRequireEvalChange = (event: Event) => {
     const checkbox = event.target as HTMLInputElement;
