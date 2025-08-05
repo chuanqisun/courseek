@@ -35,6 +35,10 @@ const Main = createComponent(() => {
     maxLabUnits?: number;
     minPrepUnits?: number;
     maxPrepUnits?: number;
+    minHours?: number;
+    maxHours?: number;
+    minSize?: number;
+    maxSize?: number;
   }
 
   const defaultUnits: UnitsFilter = {};
@@ -53,6 +57,10 @@ const Main = createComponent(() => {
           value.maxLabUnits ?? "",
           value.minPrepUnits ?? "",
           value.maxPrepUnits ?? "",
+          value.minHours ?? "",
+          value.maxHours ?? "",
+          value.minSize ?? "",
+          value.maxSize ?? "",
         ];
         const hasAnyValue = values.some((v) => v !== "");
         return hasAnyValue ? values.join(",") : "";
@@ -60,7 +68,7 @@ const Main = createComponent(() => {
       decode: (value) => {
         if (!value) return defaultUnits;
         const parts = value.split(",");
-        if (parts.length !== 8) return defaultUnits;
+        if (parts.length !== 12) return defaultUnits;
         return {
           minUnits: parts[0] ? parseInt(parts[0], 10) || 0 : undefined,
           maxUnits: parts[1] ? parseInt(parts[1], 10) || 0 : undefined,
@@ -70,6 +78,10 @@ const Main = createComponent(() => {
           maxLabUnits: parts[5] ? parseInt(parts[5], 10) || 0 : undefined,
           minPrepUnits: parts[6] ? parseInt(parts[6], 10) || 0 : undefined,
           maxPrepUnits: parts[7] ? parseInt(parts[7], 10) || 0 : undefined,
+          minHours: parts[8] ? parseInt(parts[8], 10) || 0 : undefined,
+          maxHours: parts[9] ? parseInt(parts[9], 10) || 0 : undefined,
+          minSize: parts[10] ? parseInt(parts[10], 10) || 0 : undefined,
+          maxSize: parts[11] ? parseInt(parts[11], 10) || 0 : undefined,
         };
       },
     },
@@ -134,7 +146,7 @@ const Main = createComponent(() => {
     tap({ subscribe: () => console.log("searching...") }),
     switchMap(async ([titleValue, selectedTerms, selectedLevel, unitsValue]) => {
       const fullQuery: Query = {
-        title: titleValue,
+        keywords: titleValue,
         terms: selectedTerms.length > 0 ? selectedTerms : undefined,
         level: selectedLevel || undefined,
         minUnits: unitsValue.minUnits,
@@ -145,6 +157,10 @@ const Main = createComponent(() => {
         maxLabUnits: unitsValue.maxLabUnits,
         minPrepUnits: unitsValue.minPrepUnits,
         maxPrepUnits: unitsValue.maxPrepUnits,
+        minHours: unitsValue.minHours,
+        maxHours: unitsValue.maxHours,
+        minSize: unitsValue.minSize,
+        maxSize: unitsValue.maxSize,
       };
       const ports = new MessageChannel();
       worker.postMessage(fullQuery, [ports.port2]);
@@ -168,14 +184,17 @@ const Main = createComponent(() => {
           <div class="course-title">
             <strong>${item.id} ${item.title}</strong>
             <div class="course-meta-primary">
-              ${item.level} • ${item.units[0]}-${item.units[1]}-${item.units[2]} units • ${item.terms.join(", ")}
-              ${item.instructor ? html` • ${item.instructor}` : ""}
+              ${item.level} · ${item.units[0]}-${item.units[1]}-${item.units[2]} units · ${item.terms.join(", ")} ·
+              ${parseFloat(item.hours.toFixed(2))} hrs ${parseFloat(item.rating.toFixed(2))} pts
+              ${parseFloat(item.size.toFixed(2))} ppl
             </div>
           </div>
 
           <div class="course-description">${item.description}</div>
 
-          <div class="course-meta-secondary">Prereq: ${item.prereq}</div>
+          <div class="course-meta-secondary">
+            ${item.instructor ? html`${item.instructor} · ` : ""}Prereq: ${item.prereq}
+          </div>
         </div>` as any;
 
       return html`
@@ -269,7 +288,7 @@ const Main = createComponent(() => {
             </fieldset>
 
             <fieldset>
-              <legend>Lecture Hours</legend>
+              <legend>Lecture units</legend>
               <div class="form-row">
                 <label>
                   Min
@@ -293,7 +312,7 @@ const Main = createComponent(() => {
             </fieldset>
 
             <fieldset>
-              <legend>Lab Hours</legend>
+              <legend>Lab units</legend>
               <div class="form-row">
                 <label>
                   Min
@@ -317,7 +336,7 @@ const Main = createComponent(() => {
             </fieldset>
 
             <fieldset>
-              <legend>Prep Hours</legend>
+              <legend>Prep units</legend>
               <div class="form-row">
                 <label>
                   Min
@@ -335,6 +354,54 @@ const Main = createComponent(() => {
                     min="0"
                     @input=${handleUnitsChange("maxPrepUnits")}
                     .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Hours</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minHours")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minHours?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxHours")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxHours?.toString() || "")))}
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Size</legend>
+              <div class="form-row">
+                <label>
+                  Min
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("minSize")}
+                    .value=${observe(units.value$.pipe(map((v) => v.minSize?.toString() || "")))}
+                  />
+                </label>
+                <label>
+                  Max
+                  <input
+                    type="number"
+                    min="0"
+                    @input=${handleUnitsChange("maxSize")}
+                    .value=${observe(units.value$.pipe(map((v) => v.maxSize?.toString() || "")))}
                   />
                 </label>
               </div>

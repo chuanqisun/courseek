@@ -8,12 +8,15 @@ declare var self: DedicatedWorkerGlobalScope;
 const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([courseId, course]) => ({
   id: course.number,
   title: course.name,
-  instructor: course.inCharge,
   description: course.description,
+  instructor: course.inCharge,
   terms: course.terms,
   level: course.level,
   prereq: course.prereqs,
   units: [course.lectureUnits ?? 0, course.labUnits ?? 0, course.preparationUnits ?? 0],
+  hours: course.hours,
+  rating: course.rating,
+  size: course.size,
 }));
 
 self.addEventListener("message", (event) => {
@@ -29,12 +32,8 @@ self.addEventListener("message", (event) => {
   const results = indexData.filter((course) => {
     let matches = true;
 
-    if (query.title) {
-      matches = matches && course.title.toLowerCase().includes(query.title.toLowerCase());
-    }
-
-    if (query.description) {
-      matches = matches && course.description.toLowerCase().includes(query.description.toLowerCase());
+    if (query.keywords) {
+      matches = matches && course.title.toLowerCase().includes(query.keywords.toLowerCase());
     }
 
     if (query.semester) {
@@ -91,6 +90,18 @@ self.addEventListener("message", (event) => {
 
     if (query.level) {
       matches = matches && course.level.toLowerCase() === query.level.toLowerCase();
+    }
+
+    if (query.minHours !== undefined || query.maxHours !== undefined) {
+      const lowerbound = query.minHours ?? 0;
+      const upperbound = query.maxHours ?? Infinity;
+      matches = matches && course.hours >= lowerbound && course.hours <= upperbound;
+    }
+
+    if (query.minSize !== undefined || query.maxSize !== undefined) {
+      const lowerbound = query.minSize ?? 0;
+      const upperbound = query.maxSize ?? Infinity;
+      matches = matches && course.size >= lowerbound && course.size <= upperbound;
     }
 
     return matches;

@@ -7,11 +7,13 @@ export interface CourseItem {
   prereq: string;
   units: [lecture: number, lab: number, prep: number];
   level: string;
+  hours: number;
+  rating: number;
+  size: number;
 }
 
 export interface Query {
-  title?: string;
-  description?: string;
+  keywords?: string;
   semester?: string;
   noPrereq?: boolean;
   minUnits?: number;
@@ -22,6 +24,10 @@ export interface Query {
   maxLabUnits?: number;
   minPrepUnits?: number;
   maxPrepUnits?: number;
+  minHours?: number;
+  maxHours?: number;
+  minSize?: number;
+  maxSize?: number;
   level?: string;
   terms?: ("FA" | "JA" | "SP" | "SU")[];
 }
@@ -43,4 +49,7 @@ export interface HydrantItemRaw {
   labUnits?: number;
   lectureUnits?: number;
   preparationUnits?: number;
+  rating: number;
+  hours: number;
+  size: number;
 }
