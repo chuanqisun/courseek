@@ -104,6 +104,32 @@ const Main = createComponent(() => {
     units.set({ ...currentUnits, [field]: value });
   };
 
+  const handleReset = () => {
+    title.set("");
+    selectedTerms.set([]);
+    selectedLevel.set("");
+    units.set(defaultUnits);
+  };
+
+  const handleDownloadLLMsTxt = () => {
+    const items = activeItems$.value;
+    const content = items
+      .map((item) => {
+        return `## ${item.title}\nDescription: ${item.description}\n`;
+      })
+      .join("\n");
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "llms.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const search$ = combineLatest([title.value$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
     tap({ subscribe: () => console.log("searching...") }),
     switchMap(async ([titleValue, selectedTerms, selectedLevel, unitsValue]) => {
@@ -138,15 +164,19 @@ const Main = createComponent(() => {
   const template = combineLatest([activeItems$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
     map(([items, currentTerms, currentLevel]) => {
       const renderItem: RenderItemFunction<CourseItem> = (item) =>
-        html`<li>
-          <strong>${item.id} ${item.title}</strong> (<span title="lecture">${item.units[0]}</span>-<span title="prep"
-            >${item.units[1]}</span
-          >-<span title="lab">${item.units[2]}</span> units, ${item.level})<br />
-          <em>${item.instructor}</em><br />
-          <p>${item.description}</p>
-          <small>Terms: ${item.terms.join(" | ")}</small>
-          <small>Prereq: ${item.prereq}</small>
-        </li>` as any;
+        html`<div class="course-card">
+          <div class="course-title">
+            <strong>${item.id} ${item.title}</strong>
+            <div class="course-meta-primary">
+              ${item.level} • ${item.units[0]}-${item.units[1]}-${item.units[2]} units • ${item.terms.join(", ")}
+              ${item.instructor ? html` • ${item.instructor}` : ""}
+            </div>
+          </div>
+
+          <div class="course-description">${item.description}</div>
+
+          <div class="course-meta-secondary">Prereq: ${item.prereq}</div>
+        </div>` as any;
 
       return html`
         <div class="two-column-layout">
@@ -156,25 +186,27 @@ const Main = createComponent(() => {
                 <b>Search</b>
                 <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
               </label>
+
+              <p>${items.length} courses</p>
             </div>
 
             <fieldset>
               <legend>Terms</legend>
               <label
                 ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
-                Fall</label
+                Fall 25</label
               >
               <label
                 ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
-                January</label
+                January 26</label
               >
               <label
                 ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} />
-                Spring</label
+                Spring 26</label
               >
               <label
                 ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} />
-                Summer</label
+                Summer 26</label
               >
             </fieldset>
 
@@ -307,10 +339,14 @@ const Main = createComponent(() => {
                 </label>
               </div>
             </fieldset>
+
+            <div class="form-actions">
+              <button type="button" @click=${handleReset}>Reset</button>
+              <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
+            </div>
           </div>
 
           <div class="results-panel">
-            <h2>Results (${items.length})</h2>
             <lit-virtualizer
               .items=${items}
               .keyFunction=${(item: any) => item.id}
