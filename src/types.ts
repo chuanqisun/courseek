@@ -16,6 +16,8 @@ export interface Query {
   keywords?: string;
   semester?: string;
   noPrereq?: boolean;
+  halfTerm?: boolean;
+  noFinal?: boolean;
   minUnits?: number;
   maxUnits?: number;
   minLectureUnits?: number;
@@ -55,4 +57,6 @@ export interface HydrantItemRaw {
   rating: number;
   hours: number;
   size: number;
+  half: boolean /** is half term */;
+  final: boolean /** has final exam */;
 }

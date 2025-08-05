@@ -37,6 +37,18 @@ const Main = createComponent(() => {
     name: "requireEval",
     initialValue: false,
   });
+  const halfTerm = useSearchParam<boolean>({
+    name: "halfTerm",
+    initialValue: false,
+  });
+  const noPrereq = useSearchParam<boolean>({
+    name: "noPrereq",
+    initialValue: false,
+  });
+  const noFinal = useSearchParam<boolean>({
+    name: "noFinal",
+    initialValue: false,
+  });
 
   interface UnitsFilter {
     minUnits?: number;
@@ -177,6 +189,21 @@ const Main = createComponent(() => {
     requireEval.set(checkbox.checked);
   };
 
+  const handleHalfTermChange = (event: Event) => {
+    const checkbox = event.target as HTMLInputElement;
+    halfTerm.set(checkbox.checked);
+  };
+
+  const handleNoPrereqChange = (event: Event) => {
+    const checkbox = event.target as HTMLInputElement;
+    noPrereq.set(checkbox.checked);
+  };
+
+  const handleNoFinalChange = (event: Event) => {
+    const checkbox = event.target as HTMLInputElement;
+    noFinal.set(checkbox.checked);
+  };
+
   const handleUnitsChange = (field: keyof UnitsFilter) => (event: Event) => {
     const input = event.target as HTMLInputElement;
     const inputValue = input.value.trim();
@@ -192,6 +219,9 @@ const Main = createComponent(() => {
     selectedSort.set("rating");
     selectedSortDirection.set("high");
     requireEval.set(false);
+    halfTerm.set(false);
+    noPrereq.set(false);
+    noFinal.set(false);
     units.set(defaultUnits);
   };
 
@@ -221,6 +251,9 @@ const Main = createComponent(() => {
     selectedSort.value$,
     selectedSortDirection.value$,
     requireEval.value$,
+    halfTerm.value$,
+    noPrereq.value$,
+    noFinal.value$,
     units.value$,
   ]).pipe(
     tap({ subscribe: () => console.log("searching...") }),
@@ -232,6 +265,9 @@ const Main = createComponent(() => {
         selectedSort,
         selectedSortDirection,
         requireEval,
+        halfTermValue,
+        noPrereqValue,
+        noFinalValue,
         unitsValue,
       ]) => {
         const fullQuery: Query = {
@@ -241,6 +277,9 @@ const Main = createComponent(() => {
           sort: selectedSort,
           sortDirection: selectedSortDirection,
           requireEval,
+          halfTerm: halfTermValue,
+          noPrereq: noPrereqValue,
+          noFinal: noFinalValue,
           minUnits: unitsValue.minUnits,
           maxUnits: unitsValue.maxUnits,
           minLectureUnits: unitsValue.minLectureUnits,
@@ -277,349 +316,381 @@ const Main = createComponent(() => {
     selectedSort.value$,
     selectedSortDirection.value$,
     requireEval.value$,
+    halfTerm.value$,
+    noPrereq.value$,
+    noFinal.value$,
     units.value$,
   ]).pipe(
-    map(([items, currentTerms, currentLevel, currentSort, currentSortDirection, currentRequireEval]) => {
-      const renderItem: RenderItemFunction<CourseItem> = (item) =>
-        html`<div class="course-card">
-          <div class="course-title">
-            <strong>
-              <a
-                href="https://student.mit.edu/catalog/search.cgi?search=${item.id}"
-                target="_blank"
-                class="course-eval-link"
-                >${item.id} ${item.title}</a
-              >
-            </strong>
-            <div class="course-meta-primary">
-              <span title="${item.level === "G" ? "Graduate" : item.level === "U" ? "Undergraduate" : ""}"
-                >${item.level}</span
-              >
-              ·
-              <span
-                title="${item.units[0]} hours of lecture/recitation, ${item.units[1]} hour lab/design/field, ${item
-                  .units[2]} hours of preparation"
-                >${item.units[0]}-${item.units[1]}-${item.units[2]} units</span
-              >
-              ·
-              <span
-                title="${item.terms
-                  .map((term) => {
-                    switch (term) {
-                      case "FA":
-                        return "Fall";
-                      case "JA":
-                        return "January (IAP)";
-                      case "SP":
-                        return "Spring";
-                      case "SU":
-                        return "Summer";
-                      default:
-                        return term;
-                    }
-                  })
-                  .join(", ")}"
-                >${item.terms.join(", ")}</span
-              >
-              ·
-              <a
-                href="https://eduapps.mit.edu/ose-rpt/subjectEvaluationSearch.htm?search=Search&subjectCode=${item.id}"
-                target="_blank"
-                class="course-eval-link"
-                title="Course evaluation data from student feedback"
-                ><span title="Average hours per week spent on this course"
-                  >${parseFloat(item.hours.toFixed(2))} hrs</span
+    map(
+      ([
+        items,
+        currentTerms,
+        currentLevel,
+        currentSort,
+        currentSortDirection,
+        currentRequireEval,
+        currentHalfTerm,
+        currentNoPrereq,
+        currentNoFinal,
+      ]) => {
+        const renderItem: RenderItemFunction<CourseItem> = (item) =>
+          html`<div class="course-card">
+            <div class="course-title">
+              <strong>
+                <a
+                  href="https://student.mit.edu/catalog/search.cgi?search=${item.id}"
+                  target="_blank"
+                  class="course-eval-link"
+                  >${item.id} ${item.title}</a
                 >
-                <span title="Average rating score from student evaluations"
-                  >${parseFloat(item.rating.toFixed(2))} pts</span
+              </strong>
+              <div class="course-meta-primary">
+                <span title="${item.level === "G" ? "Graduate" : item.level === "U" ? "Undergraduate" : ""}"
+                  >${item.level}</span
                 >
-                <span title="Average class size (number of students)">${parseFloat(item.size.toFixed(2))} ppl</span></a
-              >
+                ·
+                <span
+                  title="${item.units[0]} hours of lecture/recitation, ${item.units[1]} hour lab/design/field, ${item
+                    .units[2]} hours of preparation"
+                  >${item.units[0]}-${item.units[1]}-${item.units[2]} units</span
+                >
+                ·
+                <span
+                  title="${item.terms
+                    .map((term) => {
+                      switch (term) {
+                        case "FA":
+                          return "Fall";
+                        case "JA":
+                          return "January (IAP)";
+                        case "SP":
+                          return "Spring";
+                        case "SU":
+                          return "Summer";
+                        default:
+                          return term;
+                      }
+                    })
+                    .join(", ")}"
+                  >${item.terms.join(", ")}</span
+                >
+                ·
+                <a
+                  href="https://eduapps.mit.edu/ose-rpt/subjectEvaluationSearch.htm?search=Search&subjectCode=${item.id}"
+                  target="_blank"
+                  class="course-eval-link"
+                  title="Course evaluation data from student feedback"
+                  ><span title="Average hours per week spent on this course"
+                    >${parseFloat(item.hours.toFixed(2))} hrs</span
+                  >
+                  <span title="Average rating score from student evaluations"
+                    >${parseFloat(item.rating.toFixed(2))} pts</span
+                  >
+                  <span title="Average class size (number of students)"
+                    >${parseFloat(item.size.toFixed(2))} ppl</span
+                  ></a
+                >
+              </div>
+            </div>
+
+            <div class="course-description">${item.description}</div>
+
+            <div class="course-meta-secondary">
+              ${item.instructor ? html`${item.instructor} · ` : ""}Prereq: ${item.prereq}
+            </div>
+          </div>` as any;
+
+        return html`
+          <div class="two-column-layout">
+            <div class="search-form">
+              <div class="form-section">
+                <label class="block-field">
+                  <b>Search</b>
+                  <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
+                </label>
+
+                <p>${items.length} courses</p>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" @click=${handleReset}>Reset</button>
+                <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
+              </div>
+
+              <fieldset>
+                <legend>Sort by</legend>
+                <label
+                  ><input type="checkbox" @change=${handleRequireEvalChange} .checked=${currentRequireEval} /> Require
+                  eval</label
+                >
+                <label class="sort-label"
+                  ><input
+                    type="radio"
+                    name="sort"
+                    value="rating"
+                    @change=${handleSortChange}
+                    .checked=${currentSort === "rating"}
+                  />
+                  Rating
+                  <button type="button" @click=${handleSortDirectionChangeForDimension("rating")}>
+                    ${currentSort === "rating" ? (currentSortDirection === "high" ? "high" : "low") : "high"}
+                  </button></label
+                >
+                <label class="sort-label"
+                  ><input
+                    type="radio"
+                    name="sort"
+                    value="hours"
+                    @change=${handleSortChange}
+                    .checked=${currentSort === "hours"}
+                  />
+                  Hours
+                  <button type="button" @click=${handleSortDirectionChangeForDimension("hours")}>
+                    ${currentSort === "hours" ? (currentSortDirection === "short" ? "short" : "long") : "short"}
+                  </button></label
+                >
+                <label class="sort-label"
+                  ><input
+                    type="radio"
+                    name="sort"
+                    value="size"
+                    @change=${handleSortChange}
+                    .checked=${currentSort === "size"}
+                  />
+                  Size
+                  <button type="button" @click=${handleSortDirectionChangeForDimension("size")}>
+                    ${currentSort === "size" ? (currentSortDirection === "small" ? "small" : "large") : "small"}
+                  </button></label
+                >
+              </fieldset>
+
+              <fieldset>
+                <legend>Terms</legend>
+                <label
+                  ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
+                  Fall 25</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
+                  January 26 (IAP)</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} />
+                  Spring 26</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} />
+                  Summer 26</label
+                >
+              </fieldset>
+
+              <fieldset>
+                <legend>Level</legend>
+                <label
+                  ><input
+                    type="radio"
+                    name="level"
+                    value=""
+                    @change=${handleLevelChange}
+                    .checked=${currentLevel === ""}
+                  />
+                  Both</label
+                >
+                <label title="Undergraduate"
+                  ><input
+                    type="radio"
+                    name="level"
+                    value="U"
+                    @change=${handleLevelChange}
+                    .checked=${currentLevel === "U"}
+                  />
+                  Undergraduate</label
+                >
+                <label title="Graduate"
+                  ><input
+                    type="radio"
+                    name="level"
+                    value="G"
+                    @change=${handleLevelChange}
+                    .checked=${currentLevel === "G"}
+                  />
+                  Graduate</label
+                >
+              </fieldset>
+
+              <fieldset>
+                <legend>Features</legend>
+                <label
+                  ><input type="checkbox" @change=${handleHalfTermChange} .checked=${currentHalfTerm} /> Half
+                  term</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleNoPrereqChange} .checked=${currentNoPrereq} /> No
+                  prereq</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleNoFinalChange} .checked=${currentNoFinal} /> No final</label
+                >
+              </fieldset>
+
+              <fieldset>
+                <legend>Units</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minUnits?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxUnits?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Lecture units</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minLectureUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minLectureUnits?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxLectureUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxLectureUnits?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Lab units</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minLabUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minLabUnits?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxLabUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxLabUnits?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Prep units</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minPrepUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minPrepUnits?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxPrepUnits")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Hours</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minHours")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minHours?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxHours")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxHours?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Size</legend>
+                <div class="form-row">
+                  <label>
+                    Min
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("minSize")}
+                      .value=${observe(units.value$.pipe(map((v) => v.minSize?.toString() || "")))}
+                    />
+                  </label>
+                  <label>
+                    Max
+                    <input
+                      type="number"
+                      min="0"
+                      @input=${handleUnitsChange("maxSize")}
+                      .value=${observe(units.value$.pipe(map((v) => v.maxSize?.toString() || "")))}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="results-panel">
+              ${items.length === 0
+                ? html`<div style="color: #888; padding: 2ch;">No course found</div>`
+                : html`<lit-virtualizer
+                    .items=${items}
+                    .keyFunction=${(item: any) => item.id}
+                    .renderItem=${renderItem}
+                  ></lit-virtualizer>`}
             </div>
           </div>
-
-          <div class="course-description">${item.description}</div>
-
-          <div class="course-meta-secondary">
-            ${item.instructor ? html`${item.instructor} · ` : ""}Prereq: ${item.prereq}
-          </div>
-        </div>` as any;
-
-      return html`
-        <div class="two-column-layout">
-          <div class="search-form">
-            <div class="form-section">
-              <label class="block-field">
-                <b>Search</b>
-                <input type="search" name="title" @input=${handleTitleChange} .value=${observe(title.value$)} />
-              </label>
-
-              <p>${items.length} courses</p>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" @click=${handleReset}>Reset</button>
-              <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
-            </div>
-
-            <fieldset>
-              <legend>Sort by</legend>
-              <label
-                ><input type="checkbox" @change=${handleRequireEvalChange} .checked=${currentRequireEval} /> Require
-                eval</label
-              >
-              <label class="sort-label"
-                ><input
-                  type="radio"
-                  name="sort"
-                  value="rating"
-                  @change=${handleSortChange}
-                  .checked=${currentSort === "rating"}
-                />
-                Rating
-                <button type="button" @click=${handleSortDirectionChangeForDimension("rating")}>
-                  ${currentSort === "rating" ? (currentSortDirection === "high" ? "high" : "low") : "high"}
-                </button></label
-              >
-              <label class="sort-label"
-                ><input
-                  type="radio"
-                  name="sort"
-                  value="hours"
-                  @change=${handleSortChange}
-                  .checked=${currentSort === "hours"}
-                />
-                Hours
-                <button type="button" @click=${handleSortDirectionChangeForDimension("hours")}>
-                  ${currentSort === "hours" ? (currentSortDirection === "short" ? "short" : "long") : "short"}
-                </button></label
-              >
-              <label class="sort-label"
-                ><input
-                  type="radio"
-                  name="sort"
-                  value="size"
-                  @change=${handleSortChange}
-                  .checked=${currentSort === "size"}
-                />
-                Size
-                <button type="button" @click=${handleSortDirectionChangeForDimension("size")}>
-                  ${currentSort === "size" ? (currentSortDirection === "small" ? "small" : "large") : "small"}
-                </button></label
-              >
-            </fieldset>
-
-            <fieldset>
-              <legend>Terms</legend>
-              <label
-                ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
-                Fall 25</label
-              >
-              <label
-                ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
-                January 26 (IAP)</label
-              >
-              <label
-                ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} />
-                Spring 26</label
-              >
-              <label
-                ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} />
-                Summer 26</label
-              >
-            </fieldset>
-
-            <fieldset>
-              <legend>Level</legend>
-              <label
-                ><input
-                  type="radio"
-                  name="level"
-                  value=""
-                  @change=${handleLevelChange}
-                  .checked=${currentLevel === ""}
-                />
-                Both</label
-              >
-              <label title="Undergraduate"
-                ><input
-                  type="radio"
-                  name="level"
-                  value="U"
-                  @change=${handleLevelChange}
-                  .checked=${currentLevel === "U"}
-                />
-                Undergraduate</label
-              >
-              <label title="Graduate"
-                ><input
-                  type="radio"
-                  name="level"
-                  value="G"
-                  @change=${handleLevelChange}
-                  .checked=${currentLevel === "G"}
-                />
-                Graduate</label
-              >
-            </fieldset>
-
-            <fieldset>
-              <legend>Units</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minUnits?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxUnits?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>Lecture units</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minLectureUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minLectureUnits?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxLectureUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxLectureUnits?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>Lab units</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minLabUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minLabUnits?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxLabUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxLabUnits?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>Prep units</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minPrepUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minPrepUnits?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxPrepUnits")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>Hours</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minHours")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minHours?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxHours")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxHours?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>Size</legend>
-              <div class="form-row">
-                <label>
-                  Min
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("minSize")}
-                    .value=${observe(units.value$.pipe(map((v) => v.minSize?.toString() || "")))}
-                  />
-                </label>
-                <label>
-                  Max
-                  <input
-                    type="number"
-                    min="0"
-                    @input=${handleUnitsChange("maxSize")}
-                    .value=${observe(units.value$.pipe(map((v) => v.maxSize?.toString() || "")))}
-                  />
-                </label>
-              </div>
-            </fieldset>
-          </div>
-
-          <div class="results-panel">
-            ${items.length === 0
-              ? html`<div style="color: #888; padding: 2ch;">No course found</div>`
-              : html`<lit-virtualizer
-                  .items=${items}
-                  .keyFunction=${(item: any) => item.id}
-                  .renderItem=${renderItem}
-                ></lit-virtualizer>`}
-          </div>
-        </div>
-      `;
-    }),
+        `;
+      },
+    ),
     mergeWith(effects$),
   );
 
