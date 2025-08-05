@@ -37,6 +37,17 @@ body {
   height: 100vh;
 }
 
+@media screen and (max-width: 40rem) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 16ch 1fr;
+  }
+
+  .search-form {
+    border-bottom: 1px solid var(--color-text-secondary);
+  }
+}
+
 .search-form {
   overflow-y: auto;
   scrollbar-gutter: stable;
