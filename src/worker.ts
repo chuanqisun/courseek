@@ -206,13 +206,11 @@ self.addEventListener("message", (event) => {
       // Filter by course number prefixes
       const numberPrefixes = query.numbers
         .split(",")
-        .map(n => n.trim().toLowerCase())
-        .filter(n => n.length > 0);
-      
+        .map((n) => n.trim().toLowerCase())
+        .filter((n) => n.length > 0);
+
       if (numberPrefixes.length > 0) {
-        matches = matches && numberPrefixes.some(prefix => 
-          course.id.toLowerCase().startsWith(prefix)
-        );
+        matches = matches && numberPrefixes.some((prefix) => course.id.toLowerCase().startsWith(prefix));
       }
     }
 
@@ -220,8 +218,11 @@ self.addEventListener("message", (event) => {
   });
 
   // Parse number prefixes for highlighting
-  const numberPrefixes = query.numbers 
-    ? query.numbers.split(",").map(n => n.trim()).filter(n => n.length > 0)
+  const numberPrefixes = query.numbers
+    ? query.numbers
+        .split(",")
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0)
     : [];
 
   // Add HTML highlighting for all results
@@ -263,7 +264,7 @@ self.addEventListener("message", (event) => {
 
         return { ...course, score: totalScore };
       })
-      .filter(course => course.score > 0)
+      .filter((course) => course.score > 0)
       .sort((a, b) => b.score - a.score); // Sort by score descending
 
     results = scoredResults;
