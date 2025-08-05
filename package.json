@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "download": "curl -o src/data/latest.json https://hydrant.mit.edu/latest.json",
     "preview": "vite preview"
   },
   "devDependencies": {
