@@ -792,7 +792,7 @@ const Main = createComponent(() => {
                 <a class="support-link" href="https://github.com/chuanqisun/courseek/actions/"
                   >${observe(lastUpdatedDisplay$)}</a
                 >
-                <a class="support-link" href="https://github.com/chuanqisun/courseek">File a bug</a>
+                <a class="support-link" href="https://github.com/chuanqisun/courseek">Open source</a>
               </fieldset>
             </div>
 
