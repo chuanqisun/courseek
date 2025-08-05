@@ -15,7 +15,7 @@ const Main = createComponent(() => {
   const title = useSearchParam<string>({ name: "title", initialValue: "" });
   const selectedTerms = useSearchParam<("FA" | "JA" | "SP" | "SU")[]>({
     name: "terms",
-    initialValue: [],
+    initialValue: ["FA"],
     codec: {
       encode: (value) => value.join(","),
       decode: (value) => (value ? (value.split(",") as ("FA" | "JA" | "SP" | "SU")[]) : []),
@@ -24,6 +24,18 @@ const Main = createComponent(() => {
   const selectedLevel = useSearchParam<"G" | "U" | "">({
     name: "level",
     initialValue: "",
+  });
+  const selectedSort = useSearchParam<"rating" | "hours" | "size">({
+    name: "sort",
+    initialValue: "rating",
+  });
+  const selectedSortDirection = useSearchParam<"high" | "low" | "long" | "short" | "large" | "small">({
+    name: "sortDir",
+    initialValue: "high",
+  });
+  const requireEval = useSearchParam<boolean>({
+    name: "requireEval",
+    initialValue: false,
   });
 
   interface UnitsFilter {
@@ -108,6 +120,63 @@ const Main = createComponent(() => {
     selectedLevel.set(radio.value as "G" | "U" | "");
   };
 
+  const handleSortChange = (event: Event) => {
+    const radio = event.target as HTMLInputElement;
+    const newSort = radio.value as "rating" | "hours" | "size";
+    selectedSort.set(newSort);
+
+    // Set default direction for each sort type
+    switch (newSort) {
+      case "rating":
+        selectedSortDirection.set("high");
+        break;
+      case "hours":
+        selectedSortDirection.set("short");
+        break;
+      case "size":
+        selectedSortDirection.set("small");
+        break;
+    }
+  };
+
+  const handleSortDirectionChangeForDimension = (sortType: "rating" | "hours" | "size") => () => {
+    // First, switch to this sort dimension if not already selected
+    if (selectedSort.value$.value !== sortType) {
+      selectedSort.set(sortType);
+      // Set default direction for the new sort type
+      switch (sortType) {
+        case "rating":
+          selectedSortDirection.set("high");
+          break;
+        case "hours":
+          selectedSortDirection.set("short");
+          break;
+        case "size":
+          selectedSortDirection.set("small");
+          break;
+      }
+    } else {
+      // If already selected, toggle the direction
+      const currentDirection = selectedSortDirection.value$.value;
+      switch (sortType) {
+        case "rating":
+          selectedSortDirection.set(currentDirection === "high" ? "low" : "high");
+          break;
+        case "hours":
+          selectedSortDirection.set(currentDirection === "short" ? "long" : "short");
+          break;
+        case "size":
+          selectedSortDirection.set(currentDirection === "small" ? "large" : "small");
+          break;
+      }
+    }
+  };
+
+  const handleRequireEvalChange = (event: Event) => {
+    const checkbox = event.target as HTMLInputElement;
+    requireEval.set(checkbox.checked);
+  };
+
   const handleUnitsChange = (field: keyof UnitsFilter) => (event: Event) => {
     const input = event.target as HTMLInputElement;
     const inputValue = input.value.trim();
@@ -120,6 +189,9 @@ const Main = createComponent(() => {
     title.set("");
     selectedTerms.set([]);
     selectedLevel.set("");
+    selectedSort.set("rating");
+    selectedSortDirection.set("high");
+    requireEval.set(false);
     units.set(defaultUnits);
   };
 
@@ -142,51 +214,127 @@ const Main = createComponent(() => {
     URL.revokeObjectURL(url);
   };
 
-  const search$ = combineLatest([title.value$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
+  const search$ = combineLatest([
+    title.value$,
+    selectedTerms.value$,
+    selectedLevel.value$,
+    selectedSort.value$,
+    selectedSortDirection.value$,
+    requireEval.value$,
+    units.value$,
+  ]).pipe(
     tap({ subscribe: () => console.log("searching...") }),
-    switchMap(async ([titleValue, selectedTerms, selectedLevel, unitsValue]) => {
-      const fullQuery: Query = {
-        keywords: titleValue,
-        terms: selectedTerms.length > 0 ? selectedTerms : undefined,
-        level: selectedLevel || undefined,
-        minUnits: unitsValue.minUnits,
-        maxUnits: unitsValue.maxUnits,
-        minLectureUnits: unitsValue.minLectureUnits,
-        maxLectureUnits: unitsValue.maxLectureUnits,
-        minLabUnits: unitsValue.minLabUnits,
-        maxLabUnits: unitsValue.maxLabUnits,
-        minPrepUnits: unitsValue.minPrepUnits,
-        maxPrepUnits: unitsValue.maxPrepUnits,
-        minHours: unitsValue.minHours,
-        maxHours: unitsValue.maxHours,
-        minSize: unitsValue.minSize,
-        maxSize: unitsValue.maxSize,
-      };
-      const ports = new MessageChannel();
-      worker.postMessage(fullQuery, [ports.port2]);
-
-      return new Promise<CourseItem[]>((resolve) => {
-        ports.port1.onmessage = (event) => {
-          const { results } = event.data;
-          activeItems$.next(results as CourseItem[]);
-          resolve(results as CourseItem[]);
+    switchMap(
+      async ([
+        titleValue,
+        selectedTerms,
+        selectedLevel,
+        selectedSort,
+        selectedSortDirection,
+        requireEval,
+        unitsValue,
+      ]) => {
+        const fullQuery: Query = {
+          keywords: titleValue,
+          terms: selectedTerms.length > 0 ? selectedTerms : undefined,
+          level: selectedLevel || undefined,
+          sort: selectedSort,
+          sortDirection: selectedSortDirection,
+          requireEval,
+          minUnits: unitsValue.minUnits,
+          maxUnits: unitsValue.maxUnits,
+          minLectureUnits: unitsValue.minLectureUnits,
+          maxLectureUnits: unitsValue.maxLectureUnits,
+          minLabUnits: unitsValue.minLabUnits,
+          maxLabUnits: unitsValue.maxLabUnits,
+          minPrepUnits: unitsValue.minPrepUnits,
+          maxPrepUnits: unitsValue.maxPrepUnits,
+          minHours: unitsValue.minHours,
+          maxHours: unitsValue.maxHours,
+          minSize: unitsValue.minSize,
+          maxSize: unitsValue.maxSize,
         };
-      });
-    }),
+        const ports = new MessageChannel();
+        worker.postMessage(fullQuery, [ports.port2]);
+
+        return new Promise<CourseItem[]>((resolve) => {
+          ports.port1.onmessage = (event) => {
+            const { results } = event.data;
+            activeItems$.next(results as CourseItem[]);
+            resolve(results as CourseItem[]);
+          };
+        });
+      },
+    ),
     tap((results) => activeItems$.next(results)),
   );
 
   const effects$ = merge(search$).pipe(ignoreElements());
-  const template = combineLatest([activeItems$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
-    map(([items, currentTerms, currentLevel]) => {
+  const template = combineLatest([
+    activeItems$,
+    selectedTerms.value$,
+    selectedLevel.value$,
+    selectedSort.value$,
+    selectedSortDirection.value$,
+    requireEval.value$,
+    units.value$,
+  ]).pipe(
+    map(([items, currentTerms, currentLevel, currentSort, currentSortDirection, currentRequireEval]) => {
       const renderItem: RenderItemFunction<CourseItem> = (item) =>
         html`<div class="course-card">
           <div class="course-title">
-            <strong>${item.id} ${item.title}</strong>
+            <strong>
+              <a
+                href="https://student.mit.edu/catalog/search.cgi?search=${item.id}"
+                target="_blank"
+                class="course-eval-link"
+                >${item.id} ${item.title}</a
+              >
+            </strong>
             <div class="course-meta-primary">
-              ${item.level} · ${item.units[0]}-${item.units[1]}-${item.units[2]} units · ${item.terms.join(", ")} ·
-              ${parseFloat(item.hours.toFixed(2))} hrs ${parseFloat(item.rating.toFixed(2))} pts
-              ${parseFloat(item.size.toFixed(2))} ppl
+              <span title="${item.level === "G" ? "Graduate" : item.level === "U" ? "Undergraduate" : ""}"
+                >${item.level}</span
+              >
+              ·
+              <span
+                title="${item.units[0]} hours of lecture/recitation, ${item.units[1]} hour lab/design/field, ${item
+                  .units[2]} hours of preparation"
+                >${item.units[0]}-${item.units[1]}-${item.units[2]} units</span
+              >
+              ·
+              <span
+                title="${item.terms
+                  .map((term) => {
+                    switch (term) {
+                      case "FA":
+                        return "Fall";
+                      case "JA":
+                        return "January (IAP)";
+                      case "SP":
+                        return "Spring";
+                      case "SU":
+                        return "Summer";
+                      default:
+                        return term;
+                    }
+                  })
+                  .join(", ")}"
+                >${item.terms.join(", ")}</span
+              >
+              ·
+              <a
+                href="https://eduapps.mit.edu/ose-rpt/subjectEvaluationSearch.htm?search=Search&subjectCode=${item.id}"
+                target="_blank"
+                class="course-eval-link"
+                title="Course evaluation data from student feedback"
+                ><span title="Average hours per week spent on this course"
+                  >${parseFloat(item.hours.toFixed(2))} hrs</span
+                >
+                <span title="Average rating score from student evaluations"
+                  >${parseFloat(item.rating.toFixed(2))} pts</span
+                >
+                <span title="Average class size (number of students)">${parseFloat(item.size.toFixed(2))} ppl</span></a
+              >
             </div>
           </div>
 
@@ -209,6 +357,58 @@ const Main = createComponent(() => {
               <p>${items.length} courses</p>
             </div>
 
+            <div class="form-actions">
+              <button type="button" @click=${handleReset}>Reset</button>
+              <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
+            </div>
+
+            <fieldset>
+              <legend>Sort by</legend>
+              <label
+                ><input type="checkbox" @change=${handleRequireEvalChange} .checked=${currentRequireEval} /> Require
+                eval</label
+              >
+              <label class="sort-label"
+                ><input
+                  type="radio"
+                  name="sort"
+                  value="rating"
+                  @change=${handleSortChange}
+                  .checked=${currentSort === "rating"}
+                />
+                Rating
+                <button type="button" @click=${handleSortDirectionChangeForDimension("rating")}>
+                  ${currentSort === "rating" ? (currentSortDirection === "high" ? "high" : "low") : "high"}
+                </button></label
+              >
+              <label class="sort-label"
+                ><input
+                  type="radio"
+                  name="sort"
+                  value="hours"
+                  @change=${handleSortChange}
+                  .checked=${currentSort === "hours"}
+                />
+                Hours
+                <button type="button" @click=${handleSortDirectionChangeForDimension("hours")}>
+                  ${currentSort === "hours" ? (currentSortDirection === "short" ? "short" : "long") : "short"}
+                </button></label
+              >
+              <label class="sort-label"
+                ><input
+                  type="radio"
+                  name="sort"
+                  value="size"
+                  @change=${handleSortChange}
+                  .checked=${currentSort === "size"}
+                />
+                Size
+                <button type="button" @click=${handleSortDirectionChangeForDimension("size")}>
+                  ${currentSort === "size" ? (currentSortDirection === "small" ? "small" : "large") : "small"}
+                </button></label
+              >
+            </fieldset>
+
             <fieldset>
               <legend>Terms</legend>
               <label
@@ -217,7 +417,7 @@ const Main = createComponent(() => {
               >
               <label
                 ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
-                January 26</label
+                January 26 (IAP)</label
               >
               <label
                 ><input type="checkbox" @change=${handleTermChange("SP")} .checked=${currentTerms.includes("SP")} />
@@ -241,7 +441,7 @@ const Main = createComponent(() => {
                 />
                 Both</label
               >
-              <label
+              <label title="Undergraduate"
                 ><input
                   type="radio"
                   name="level"
@@ -251,7 +451,7 @@ const Main = createComponent(() => {
                 />
                 Undergraduate</label
               >
-              <label
+              <label title="Graduate"
                 ><input
                   type="radio"
                   name="level"
@@ -406,19 +606,16 @@ const Main = createComponent(() => {
                 </label>
               </div>
             </fieldset>
-
-            <div class="form-actions">
-              <button type="button" @click=${handleReset}>Reset</button>
-              <button type="button" @click=${handleDownloadLLMsTxt}>LLMs.txt</button>
-            </div>
           </div>
 
           <div class="results-panel">
-            <lit-virtualizer
-              .items=${items}
-              .keyFunction=${(item: any) => item.id}
-              .renderItem=${renderItem}
-            ></lit-virtualizer>
+            ${items.length === 0
+              ? html`<div style="color: #888; padding: 2ch;">No course found</div>`
+              : html`<lit-virtualizer
+                  .items=${items}
+                  .keyFunction=${(item: any) => item.id}
+                  .renderItem=${renderItem}
+                ></lit-virtualizer>`}
           </div>
         </div>
       `;

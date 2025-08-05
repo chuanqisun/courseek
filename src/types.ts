@@ -30,6 +30,9 @@ export interface Query {
   maxSize?: number;
   level?: string;
   terms?: ("FA" | "JA" | "SP" | "SU")[];
+  sort?: "rating" | "hours" | "size";
+  sortDirection?: "high" | "low" | "long" | "short" | "large" | "small";
+  requireEval?: boolean;
 }
 
 export interface HydrantRaw {

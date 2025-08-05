@@ -5,7 +5,7 @@ import type { CourseItem, HydrantRaw, Query } from "./types";
 
 declare var self: DedicatedWorkerGlobalScope;
 
-const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([courseId, course]) => ({
+const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).classes).map(([, course]) => ({
   id: course.number,
   title: course.name,
   description: course.description,
@@ -104,8 +104,39 @@ self.addEventListener("message", (event) => {
       matches = matches && course.size >= lowerbound && course.size <= upperbound;
     }
 
+    if (query.requireEval) {
+      // Filter out courses with no evaluation data (0 hours, 0 rating, or 0 size)
+      matches = matches && course.hours > 0 && course.rating > 0 && course.size > 0;
+    }
+
     return matches;
   });
+
+  // Sort results based on the sort parameter
+  if (query.sort) {
+    results.sort((a, b) => {
+      let comparison = 0;
+
+      switch (query.sort) {
+        case "rating":
+          comparison = b.rating - a.rating; // Default: higher rating first
+          if (query.sortDirection === "low") comparison = -comparison;
+          break;
+        case "hours":
+          comparison = a.hours - b.hours; // Default: lower hours first
+          if (query.sortDirection === "long") comparison = -comparison;
+          break;
+        case "size":
+          comparison = a.size - b.size; // Default: lower size first
+          if (query.sortDirection === "large") comparison = -comparison;
+          break;
+        default:
+          return 0;
+      }
+
+      return comparison;
+    });
+  }
 
   port.postMessage({ results });
 });
