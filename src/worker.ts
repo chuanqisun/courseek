@@ -13,7 +13,7 @@ const indexData: CourseItem[] = Object.entries((data as any as HydrantRaw).class
   terms: course.terms,
   level: course.level,
   prereq: course.prereqs,
-  units: [course.lectureUnits ?? 0, course.labUnits ?? 0, course.preparationUnits ?? 0].join("-") || "0",
+  units: [course.lectureUnits ?? 0, course.labUnits ?? 0, course.preparationUnits ?? 0],
 }));
 
 self.addEventListener("message", (event) => {
@@ -45,12 +45,52 @@ self.addEventListener("message", (event) => {
       matches = matches && course.terms.some((term) => query.terms!.includes(term));
     }
 
-    if (query.prereq) {
-      matches = matches && course.prereq.toLowerCase().includes(query.prereq.toLowerCase());
+    if (query.noPrereq) {
+      matches = matches && (course.prereq.trim() === "" || course.prereq.toLowerCase() === "none");
     }
 
-    if (query.units) {
-      matches = matches && course.units.toLowerCase().includes(query.units.toLowerCase());
+    if (query.minUnits !== undefined || query.maxUnits !== undefined) {
+      const totalUnits = course.units.reduce((a, b) => a + b, 0);
+      const lowerbound = query.minUnits ?? 0;
+      const upperbound = query.maxUnits ?? Infinity;
+      matches = matches && totalUnits >= lowerbound && totalUnits <= upperbound;
+    }
+
+    if (query.minLectureUnits !== undefined || query.maxLectureUnits !== undefined) {
+      const lectureUnits = course.units[0];
+      const lowerbound = query.minLectureUnits ?? 0;
+      const upperbound = query.maxLectureUnits ?? Infinity;
+      if (query.maxLectureUnits === 0) {
+        matches = matches && lectureUnits === 0;
+      } else {
+        matches = matches && lectureUnits >= lowerbound && lectureUnits <= upperbound;
+      }
+    }
+
+    if (query.minLabUnits !== undefined || query.maxLabUnits !== undefined) {
+      const labUnits = course.units[1];
+      const lowerbound = query.minLabUnits ?? 0;
+      const upperbound = query.maxLabUnits ?? Infinity;
+      if (query.maxLabUnits === 0) {
+        matches = matches && labUnits === 0;
+      } else {
+        matches = matches && labUnits >= lowerbound && labUnits <= upperbound;
+      }
+    }
+
+    if (query.minPrepUnits !== undefined || query.maxPrepUnits !== undefined) {
+      const prepUnits = course.units[2];
+      const lowerbound = query.minPrepUnits ?? 0;
+      const upperbound = query.maxPrepUnits ?? Infinity;
+      if (query.maxPrepUnits === 0) {
+        matches = matches && prepUnits === 0;
+      } else {
+        matches = matches && prepUnits >= lowerbound && prepUnits <= upperbound;
+      }
+    }
+
+    if (query.level) {
+      matches = matches && course.level.toLowerCase() === query.level.toLowerCase();
     }
 
     return matches;

@@ -25,6 +25,55 @@ const Main = createComponent(() => {
     name: "level",
     initialValue: "",
   });
+
+  interface UnitsFilter {
+    minUnits?: number;
+    maxUnits?: number;
+    minLectureUnits?: number;
+    maxLectureUnits?: number;
+    minLabUnits?: number;
+    maxLabUnits?: number;
+    minPrepUnits?: number;
+    maxPrepUnits?: number;
+  }
+
+  const defaultUnits: UnitsFilter = {};
+
+  const units = useSearchParam<UnitsFilter>({
+    name: "units",
+    initialValue: defaultUnits,
+    codec: {
+      encode: (value) => {
+        const values = [
+          value.minUnits ?? "",
+          value.maxUnits ?? "",
+          value.minLectureUnits ?? "",
+          value.maxLectureUnits ?? "",
+          value.minLabUnits ?? "",
+          value.maxLabUnits ?? "",
+          value.minPrepUnits ?? "",
+          value.maxPrepUnits ?? "",
+        ];
+        const hasAnyValue = values.some((v) => v !== "");
+        return hasAnyValue ? values.join(",") : "";
+      },
+      decode: (value) => {
+        if (!value) return defaultUnits;
+        const parts = value.split(",");
+        if (parts.length !== 8) return defaultUnits;
+        return {
+          minUnits: parts[0] ? parseInt(parts[0], 10) || 0 : undefined,
+          maxUnits: parts[1] ? parseInt(parts[1], 10) || 0 : undefined,
+          minLectureUnits: parts[2] ? parseInt(parts[2], 10) || 0 : undefined,
+          maxLectureUnits: parts[3] ? parseInt(parts[3], 10) || 0 : undefined,
+          minLabUnits: parts[4] ? parseInt(parts[4], 10) || 0 : undefined,
+          maxLabUnits: parts[5] ? parseInt(parts[5], 10) || 0 : undefined,
+          minPrepUnits: parts[6] ? parseInt(parts[6], 10) || 0 : undefined,
+          maxPrepUnits: parts[7] ? parseInt(parts[7], 10) || 0 : undefined,
+        };
+      },
+    },
+  });
   const activeItems$ = new BehaviorSubject<CourseItem[]>([]);
 
   const handleTitleChange = (event: Event) => {
@@ -47,13 +96,29 @@ const Main = createComponent(() => {
     selectedLevel.set(radio.value as "G" | "U" | "");
   };
 
-  const search$ = combineLatest([title.value$, selectedTerms.value$, selectedLevel.value$]).pipe(
+  const handleUnitsChange = (field: keyof UnitsFilter) => (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const inputValue = input.value.trim();
+    const value = inputValue === "" ? undefined : parseInt(inputValue, 10) || 0;
+    const currentUnits = units.value$.value;
+    units.set({ ...currentUnits, [field]: value });
+  };
+
+  const search$ = combineLatest([title.value$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
     tap({ subscribe: () => console.log("searching...") }),
-    switchMap(async ([titleValue, selectedTerms, selectedLevel]) => {
+    switchMap(async ([titleValue, selectedTerms, selectedLevel, unitsValue]) => {
       const fullQuery: Query = {
         title: titleValue,
         terms: selectedTerms.length > 0 ? selectedTerms : undefined,
         level: selectedLevel || undefined,
+        minUnits: unitsValue.minUnits,
+        maxUnits: unitsValue.maxUnits,
+        minLectureUnits: unitsValue.minLectureUnits,
+        maxLectureUnits: unitsValue.maxLectureUnits,
+        minLabUnits: unitsValue.minLabUnits,
+        maxLabUnits: unitsValue.maxLabUnits,
+        minPrepUnits: unitsValue.minPrepUnits,
+        maxPrepUnits: unitsValue.maxPrepUnits,
       };
       const ports = new MessageChannel();
       worker.postMessage(fullQuery, [ports.port2]);
@@ -70,11 +135,13 @@ const Main = createComponent(() => {
   );
 
   const effects$ = merge(search$).pipe(ignoreElements());
-  const template = combineLatest([activeItems$, selectedTerms.value$, selectedLevel.value$]).pipe(
+  const template = combineLatest([activeItems$, selectedTerms.value$, selectedLevel.value$, units.value$]).pipe(
     map(([items, currentTerms, currentLevel]) => {
       const renderItem: RenderItemFunction<CourseItem> = (item) =>
         html`<li>
-          <strong>${item.id} ${item.title}</strong> (${item.units} units, ${item.level})<br />
+          <strong>${item.id} ${item.title}</strong> (<span title="lecture">${item.units[0]}</span>-<span title="prep"
+            >${item.units[1]}</span
+          >-<span title="lab">${item.units[2]}</span> units, ${item.level})<br />
           <em>${item.instructor}</em><br />
           <p>${item.description}</p>
           <small>Terms: ${item.terms.join(" | ")}</small>
@@ -118,6 +185,94 @@ const Main = createComponent(() => {
             ><input type="radio" name="level" value="G" @change=${handleLevelChange} .checked=${currentLevel === "G"} />
             Graduate</label
           >
+        </fieldset>
+
+        <fieldset>
+          <legend>Units</legend>
+          <label>
+            Min Units:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("minUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.minUnits?.toString() || "")))}
+            />
+          </label>
+          <label>
+            Max Units:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("maxUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.maxUnits?.toString() || "")))}
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Lecture Hours</legend>
+          <label>
+            Min Lecture Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("minLectureUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.minLectureUnits?.toString() || "")))}
+            />
+          </label>
+          <label>
+            Max Lecture Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("maxLectureUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.maxLectureUnits?.toString() || "")))}
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Lab Hours</legend>
+          <label>
+            Min Lab Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("minLabUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.minLabUnits?.toString() || "")))}
+            />
+          </label>
+          <label>
+            Max Lab Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("maxLabUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.maxLabUnits?.toString() || "")))}
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Prep Work Hours</legend>
+          <label>
+            Min Prep Work Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("minPrepUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.minPrepUnits?.toString() || "")))}
+            />
+          </label>
+          <label>
+            Max Prep Work Hours:
+            <input
+              type="number"
+              min="0"
+              @input=${handleUnitsChange("maxPrepUnits")}
+              .value=${observe(units.value$.pipe(map((v) => v.maxPrepUnits?.toString() || "")))}
+            />
+          </label>
         </fieldset>
 
         <h2>Results (${items.length})</h2>
