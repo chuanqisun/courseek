@@ -25,11 +25,6 @@ function getMatchScore(needle: string, haystack: string): number {
     return 100;
   }
 
-  // Check for substring match, 15 points per match
-  if (haystack.includes(needle)) {
-    return 15;
-  }
-
   // Check if any word in haystack starts with needle
   const words = haystack.split(/\s+/);
   let wordStartScore = 0;
@@ -44,19 +39,39 @@ function getMatchScore(needle: string, haystack: string): number {
     return wordStartScore;
   }
 
+  // Check for substring match, 15 points per match
+  if (haystack.includes(needle)) {
+    return 15;
+  }
+
   return 0;
 }
 
 /**
- * Create highlighted HTML for matching text
+ * Create highlighted HTML for matching text with multiple keywords
  */
 function highlightMatches(text: string, searchTerm: string): string {
   if (!searchTerm) return text;
 
-  // Escape special regex characters in the search term
-  const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`(${escapedTerm})`, "gi");
-  return text.replace(regex, "<mark>$1</mark>");
+  // Parse keywords by comma separator
+  const keywords = searchTerm
+    .split(",")
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
+
+  if (keywords.length === 0) return text;
+
+  let highlightedText = text;
+
+  // Apply highlighting for each keyword
+  for (const keyword of keywords) {
+    // Escape special regex characters in the keyword
+    const escapedTerm = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedTerm})`, "gi");
+    highlightedText = highlightedText.replace(regex, "<mark>$1</mark>");
+  }
+
+  return highlightedText;
 }
 
 /**
@@ -249,20 +264,49 @@ self.addEventListener("message", (event) => {
 
   // Enhanced keyword search with scoring
   if (query.keywords) {
-    const normalizedKeywords = query.keywords.toLowerCase().trim();
+    // Parse keywords by comma separator
+    const keywords = query.keywords
+      .split(",")
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => k.length > 0);
 
-    // Calculate scores for courses with keyword matches
-    sortedResults = sortedResults
-      .map((course) => {
-        const titleScore = getMatchScore(normalizedKeywords, course.title);
-        const descriptionScore = getMatchScore(normalizedKeywords, course.description);
-        const instructorScore = getMatchScore(normalizedKeywords, course.instructor);
-        const totalScore = Math.max(titleScore, descriptionScore * 0.75, instructorScore * 0.9); // Weight: title > instructor > description
+    if (keywords.length > 0) {
+      // Calculate scores for courses with keyword matches (OR logic)
+      sortedResults = sortedResults
+        .map((course) => {
+          let totalTitleScore = 0;
+          let totalDescriptionScore = 0;
+          let totalInstructorScore = 0;
+          let matchingKeywordsCount = 0;
 
-        return { ...course, score: totalScore };
-      })
-      .filter((course) => course.score > 0)
-      .sort((a, b) => b.score - a.score); // Sort by score descending
+          // Add up scores from all matching keywords for each field
+          for (const keyword of keywords) {
+            const titleScore = getMatchScore(keyword, course.title);
+            const descriptionScore = getMatchScore(keyword, course.description);
+            const instructorScore = getMatchScore(keyword, course.instructor);
+
+            totalTitleScore += titleScore;
+            totalDescriptionScore += descriptionScore;
+            totalInstructorScore += instructorScore;
+
+            // Count this keyword as matching if any field has a score > 0
+            if (titleScore > 0 || descriptionScore > 0 || instructorScore > 0) {
+              matchingKeywordsCount++;
+            }
+          }
+
+          const baseScore = totalTitleScore + totalDescriptionScore * 0.75 + totalInstructorScore * 0.9;
+
+          // Apply bonus for multiple keyword matches
+          // Bonus increases exponentially: 1 match = 1x, 2 matches = 10x, 3 matches = 100x, etc.
+          const multiMatchBonus = Math.pow(10, matchingKeywordsCount - 1);
+          const totalScore = baseScore * multiMatchBonus;
+
+          return { ...course, score: totalScore };
+        })
+        .filter((course) => course.score > 0)
+        .sort((a, b) => b.score - a.score); // Sort by score descending
+    }
   }
 
   // Sort results based on the sort parameter
