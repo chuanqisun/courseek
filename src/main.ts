@@ -268,7 +268,7 @@ const Main = createComponent(() => {
     const items = activeItems$.value;
     const content = items
       .map((item) => {
-        return `# ${item.title}\n${item.description}`;
+        return `# ${item.id} ${item.title}\n${item.description}`;
       })
       .join("\n\n");
 
