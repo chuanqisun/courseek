@@ -268,15 +268,15 @@ const Main = createComponent(() => {
     const items = activeItems$.value;
     const content = items
       .map((item) => {
-        return `## ${item.title}\nDescription: ${item.description}\n`;
+        return `# ${item.title}\n${item.description}`;
       })
-      .join("\n");
+      .join("\n\n");
 
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "llms.txt";
+    a.download = "courses.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -489,7 +489,7 @@ const Main = createComponent(() => {
 
               <div class="form-actions">
                 <button type="button" @click=${handleReset}>Reset</button>
-                <button type="button" @click=${handleDownloadLLMsTxt}>llms.txt</button>
+                <button type="button" @click=${handleDownloadLLMsTxt}>Export</button>
               </div>
 
               <fieldset>
