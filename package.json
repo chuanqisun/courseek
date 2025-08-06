@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "tsc && npm run download && vite build",
     "download": "curl -o src/data/latest.json https://hydrant.mit.edu/latest.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "dev:test": "vitest"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@lit-labs/virtualizer": "^2.1.1",
