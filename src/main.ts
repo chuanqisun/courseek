@@ -460,6 +460,9 @@ const Main = createComponent(() => {
                   <input
                     type="search"
                     name="title"
+                    autofocus
+                    autocapitalize="none"
+                    autocorrect="off"
                     @input=${handleTitleChange}
                     .value=${observe(title.value$)}
                     placeholder="Course, instructor"
@@ -471,6 +474,10 @@ const Main = createComponent(() => {
                   <input
                     type="search"
                     name="numbers"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocapitalize="none"
+                    autocorrect="off"
                     @input=${handleNumbersChange}
                     .value=${observe(numbers.value$)}
                     placeholder="6.001, MAS, 21M"
