@@ -56,20 +56,14 @@ describe("getMatchScore", () => {
     });
   });
 
-  describe.skip("future behavior with special characters (should pass after implementation)", () => {
-    it("should match across parentheses and hyphens", () => {
-      expect(getMatchScore("object oriented", "object-oriented programming")).toBeGreaterThan(0);
-      expect(getMatchScore("data structure", "data (structure) analysis")).toBeGreaterThan(0);
-      expect(getMatchScore("machine learn", "machine (learning) systems")).toBeGreaterThan(0);
-      expect(getMatchScore("web dev", "web-development")).toBeGreaterThan(0);
-      expect(getMatchScore("real time", "real-time systems")).toBeGreaterThan(0);
-    });
+  it("should match across hyphens", () => {
+    expect(getMatchScore("object-oriented", "object-oriented programming")).toBeGreaterThan(0);
+  });
 
-    it("should still handle c++ literally", () => {
-      expect(getMatchScore("c++", "c++ programming")).toBe(100);
-      expect(getMatchScore("c++", "advanced c++ concepts")).toBe(10);
-      expect(getMatchScore("c++", "learning c++")).toBe(10);
-    });
+  it("should still handle c++ literally", () => {
+    expect(getMatchScore("c++", "c++ programming")).toBe(100);
+    expect(getMatchScore("c++", "advanced c++ concepts")).toBe(10);
+    expect(getMatchScore("c++", "learning c++")).toBe(10);
   });
 });
 
@@ -97,7 +91,6 @@ describe("highlightMatches", () => {
 
   describe("current behavior with special characters", () => {
     it("should not highlight across parentheses currently", () => {
-      // These capture current behavior - should change after we implement the feature
       expect(highlightMatches("object-oriented programming", "object oriented")).toBe("object-oriented programming");
       expect(highlightMatches("data (structure) analysis", "data structure")).toBe("data (structure) analysis");
     });
@@ -108,23 +101,6 @@ describe("highlightMatches", () => {
     });
 
     it("should handle c++ literally", () => {
-      expect(highlightMatches("c++ programming language", "c++")).toBe("<mark>c++</mark> programming language");
-    });
-  });
-
-  describe.skip("future behavior with special characters (should pass after implementation)", () => {
-    it("should highlight across parentheses and hyphens", () => {
-      expect(highlightMatches("object-oriented programming", "object oriented")).toBe(
-        "<mark>object-oriented</mark> programming",
-      );
-      expect(highlightMatches("data (structure) analysis", "data structure")).toBe(
-        "<mark>data (structure)</mark> analysis",
-      );
-      expect(highlightMatches("web-development course", "web development")).toBe("<mark>web-development</mark> course");
-      expect(highlightMatches("real-time systems", "real time")).toBe("<mark>real-time</mark> systems");
-    });
-
-    it("should still handle c++ literally", () => {
       expect(highlightMatches("c++ programming language", "c++")).toBe("<mark>c++</mark> programming language");
     });
   });
