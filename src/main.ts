@@ -806,7 +806,7 @@ const Main = createComponent(() => {
               ${items.length === 0
                 ? html`<div style="color: #888; padding: 2ch;">No course found</div>`
                 : html`<lit-virtualizer
-                    .items=${items}
+                    .items=${items as SearchableCourse[]}
                     .keyFunction=${(item: any) => {
                       return item?.id;
                     }}
