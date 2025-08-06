@@ -13,16 +13,13 @@
   },
   "devDependencies": {
     "prettier": "^3.6.2",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4",
+    "typescript": "~5.9.2",
+    "vite": "^7.0.6",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@lit-labs/virtualizer": "^2.1.1",
-    "@streamparser/json": "^0.0.22",
     "lit-html": "^3.3.1",
-    "openai": "^5.10.2",
-    "rxjs": "^7.8.2",
-    "together-ai": "^0.21.0"
+    "rxjs": "^7.8.2"
   }
 }
