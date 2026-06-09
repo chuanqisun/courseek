@@ -565,10 +565,6 @@ const Main = createComponent(() => {
               <fieldset>
                 <legend>Terms</legend>
                 <label
-                  ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
-                  Fall 25</label
-                >
-                <label
                   ><input type="checkbox" @change=${handleTermChange("JA")} .checked=${currentTerms.includes("JA")} />
                   January 26 (IAP)</label
                 >
@@ -579,6 +575,10 @@ const Main = createComponent(() => {
                 <label
                   ><input type="checkbox" @change=${handleTermChange("SU")} .checked=${currentTerms.includes("SU")} />
                   Summer 26</label
+                >
+                <label
+                  ><input type="checkbox" @change=${handleTermChange("FA")} .checked=${currentTerms.includes("FA")} />
+                  Fall 26</label
                 >
               </fieldset>
 
